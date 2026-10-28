@@ -19,6 +19,8 @@ import { useOpenCEX } from "@/lib/opencex/store";
 import { ASSET_METADATA } from "@/lib/opencex/seed";
 import { OstrichLogo } from "@/components/opencex/ostrich-logo";
 import { toast } from "sonner";
+import { apiSaveOnboarding } from "next-auth/react";
+import { Button } from "@/components/ui/Button";
 
 type Experience = "NOVICE" | "INTERMEDIATE" | "PRO" | "INSTITUTIONAL";
 
@@ -68,12 +70,7 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
     }
     setSaving(true);
     try {
-      const res = await fetch("/api/onboarding", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(prefs),
-      });
-      const data = await res.json();
+      const data = await apiSaveOnboarding(prefs);
       if (!data.ok) {
         toast.error(data.error ?? "Failed to save preferences");
         setSaving(false);
@@ -115,25 +112,47 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
 
       {/* Header + progress */}
       <div className="relative px-6 pt-6 max-w-3xl mx-auto w-full">
-        <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-md bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-black overflow-hidden">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-2xl bg-primary-soft border border-primary/20 flex items-center justify-center text-primary overflow-hidden shadow-[0_2px_10px_rgba(163,230,53,0.15)]">
             <OstrichLogo className="w-7 h-7" />
           </div>
-          <span className="font-bold text-sm">Mbuni CEX · Onboarding</span>
+          <div>
+            <span className="font-bold text-sm text-white">Mbuni CEX</span>
+            <span className="text-[11px] text-tertiary ml-2">Progressive Setup</span>
+          </div>
         </div>
         <div className="flex gap-2">
-          {STEPS.map((s, i) => (
-            <div key={s} className="flex-1">
-              <div
-                className={`h-1 rounded-full transition-colors ${
-                  i <= step ? "bg-success" : "bg-elevated-foreground/30"
-                }`}
-              />
-              <div className={`text-[10px] mt-1.5 ${i === step ? "text-foreground font-medium" : "text-secondary"}`}>
-                {s}
+          {STEPS.map((s, i) => {
+            const isCompleted = i < step;
+            const isCurrent = i === step;
+            return (
+              <div key={s} className="flex-1">
+                <div
+                  className={`h-1.5 rounded-full transition-all duration-200 ${
+                    isCompleted
+                      ? "bg-primary"
+                      : isCurrent
+                      ? "bg-cta shadow-[0_0_8px_rgba(127,102,255,0.4)]"
+                      : "bg-white/10"
+                  }`}
+                />
+                <div
+                  className={`text-[11px] mt-1.5 flex items-center gap-1 ${
+                    isCompleted
+                      ? "text-primary font-semibold"
+                      : isCurrent
+                      ? "text-white font-bold"
+                      : "text-muted"
+                  }`}
+                >
+                  <span className="text-[10px] font-mono">
+                    {isCompleted ? "✓" : `0${i + 1}`}
+                  </span>
+                  <span className="truncate">{s}</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -183,19 +202,23 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <button
+          <Button
+            variant="primary"
+            size="md"
+            pill
             onClick={next}
-            disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 rounded-md bg-success hover:bg-success disabled:opacity-50 text-black text-sm font-semibold transition-colors"
+            loading={saving}
+            className="gap-2 px-6"
           >
-            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-            {saving
-              ? "Saving…"
-              : step === STEPS.length - 1
-              ? "Enter Mbuni CEX"
-              : "Continue"}
+            <span>
+              {saving
+                ? "Saving…"
+                : step === STEPS.length - 1
+                ? "Enter Mbuni CEX"
+                : "Continue"}
+            </span>
             {!saving && <ArrowRight className="w-4 h-4" />}
-          </button>
+          </Button>
         </div>
       </div>
     </div>
@@ -218,10 +241,10 @@ function StepExperience({ value, onChange }: { value: Experience; onChange: (e: 
               key={e.key}
               onClick={() => onChange(e.key)}
               className={`text-left p-4 rounded-lg border transition-all flex items-start gap-3 ${
-                active ? "border-cta bg-success/10" : "border-border hover:border-border/80 hover:bg-elevated/50"
+                active ? "border-primary bg-primary/10" : "border-border hover:border-border/80 hover:bg-elevated/50"
               }`}
             >
-              <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${active ? "bg-success text-black" : "bg-elevated/60 text-secondary"}`}>
+              <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${active ? "bg-primary text-black" : "bg-elevated/60 text-secondary"}`}>
                 <Icon className="w-4 h-4" />
               </div>
               <div className="flex-1 min-w-0">
@@ -231,7 +254,7 @@ function StepExperience({ value, onChange }: { value: Experience; onChange: (e: 
                 </div>
                 <p className="text-xs text-secondary mt-0.5">{e.description}</p>
               </div>
-              {active && <Check className="w-4 h-4 text-success shrink-0" />}
+              {active && <Check className="w-4 h-4 text-primary shrink-0" />}
             </button>
           );
         })}
@@ -254,7 +277,7 @@ function StepMarkets({
     <div>
       <h2 className="text-2xl font-bold tracking-tight">Follow your markets</h2>
       <p className="text-sm text-secondary mt-1 mb-6">
-        We&apos;ll pin these to your sidebar and dashboard. Selected: <span className="text-success font-medium">{selected.length}</span>
+        We&apos;ll pin these to your sidebar and dashboard. Selected: <span className="text-primary font-medium">{selected.length}</span>
       </p>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
@@ -267,7 +290,7 @@ function StepMarkets({
               key={sym}
               onClick={() => onToggle(sym)}
               className={`p-3 rounded-lg border flex items-center gap-2 transition-all ${
-                active ? "border-cta bg-success/10" : "border-border hover:bg-elevated/50"
+                active ? "border-primary bg-primary/10" : "border-border hover:bg-elevated/50"
               }`}
             >
               <div
@@ -328,7 +351,7 @@ function StepSecurity({
           onToggle={() => onChange({ passkeyEnrolled: !passkeyEnrolled })}
         />
         <div className="bg-elevated/40 border border-border rounded-lg p-3 flex items-start gap-3 text-xs">
-          <ShieldCheck className="w-4 h-4 text-success mt-0.5 shrink-0" />
+          <ShieldCheck className="w-4 h-4 text-primary mt-0.5 shrink-0" />
           <div className="text-secondary">
             <span className="text-foreground font-medium">Always enforced:</span> Withdrawal address whitelisting with 24h time-lock, hot wallet caps, and complete audit trail. These cannot be disabled.
           </div>
@@ -354,7 +377,7 @@ function SecurityCard({
   onToggle: () => void;
 }) {
   return (
-    <div className={`p-4 rounded-lg border flex items-start gap-3 transition-all ${enabled ? "border-cta bg-success/5" : "border-border"}`}>
+    <div className={`p-4 rounded-lg border flex items-start gap-3 transition-all ${enabled ? "border-primary bg-primary/5" : "border-border"}`}>
       <div className={`w-9 h-9 rounded-md bg-gradient-to-br ${accent} flex items-center justify-center shrink-0`}>
         <Icon className="w-4 h-4 text-black" />
       </div>
@@ -364,7 +387,7 @@ function SecurityCard({
       </div>
       <button
         onClick={onToggle}
-        className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${enabled ? "bg-success" : "bg-elevated-foreground/30"}`}
+        className={`relative w-10 h-6 rounded-full transition-colors shrink-0 ${enabled ? "bg-primary" : "bg-elevated-foreground/30"}`}
       >
         <motion.span
           className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow"
@@ -399,8 +422,8 @@ function StepReview({ prefs, onToggleTerms }: { prefs: Prefs; onToggleTerms: () 
           className="mt-0.5 w-4 h-4 accent-emerald-500"
         />
         <span className="text-xs text-secondary">
-          I agree to the <a className="text-success hover:underline">Terms of Service</a>, acknowledge the{" "}
-          <a className="text-success hover:underline">Risk Disclosure</a>, and confirm I am 18+ and not a
+          I agree to the <a className="text-primary hover:underline">Terms of Service</a>, acknowledge the{" "}
+          <a className="text-primary hover:underline">Risk Disclosure</a>, and confirm I am 18+ and not a
           resident of a restricted jurisdiction.
         </span>
       </label>
@@ -409,7 +432,7 @@ function StepReview({ prefs, onToggleTerms }: { prefs: Prefs; onToggleTerms: () 
 }
 
 function Row({ label, value, detail, badge, tone }: { label: string; value: string; detail?: string; badge?: string; tone?: "up" | "muted" }) {
-  const color = tone === "up" ? "text-success" : tone === "muted" ? "text-secondary" : "text-foreground";
+  const color = tone === "up" ? "text-primary" : tone === "muted" ? "text-secondary" : "text-foreground";
   return (
     <div className="flex items-center justify-between py-2 border-b border-border/40">
       <span className="text-xs text-secondary">{label}</span>

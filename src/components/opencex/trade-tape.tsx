@@ -27,7 +27,7 @@ export function TradeTape({ pair, limit = 40 }: { pair: string; limit?: number }
         )}
         {visible.map((t) => (
           <div key={t.id} className="grid grid-cols-3 gap-2 px-3 py-0.5 text-xs tabular hover:bg-elevated/50">
-            <span className={t.side === "BUY" ? "text-success" : "text-danger"}>
+            <span className={t.side === "BUY" ? "text-primary" : "text-danger"}>
               {fmtPrice(t.price, p.priceDecimals)}
             </span>
             <span className="text-right">{fmtQty(t.qty, p.baseDecimals)}</span>

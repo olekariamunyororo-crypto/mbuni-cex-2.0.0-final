@@ -55,7 +55,7 @@ export function OrderBook({ pair }: { pair: string }) {
 
       {/* Mid / spread */}
       <div className="border-y border-border bg-elevated/40 px-3 py-1.5 flex items-center justify-between">
-        <span className={`text-base font-bold tabular ${book.spread >= 0 ? "text-success" : "text-danger"}`}>
+        <span className={`text-base font-bold tabular ${book.spread >= 0 ? "text-primary" : "text-danger"}`}>
           {fmtPrice(book.lastPrice, p.priceDecimals)}
         </span>
         <span className="text-[10px] text-secondary">
@@ -80,7 +80,7 @@ export function OrderBook({ pair }: { pair: string }) {
       </div>
 
       <div className="px-3 py-1.5 border-t border-border flex items-center justify-between text-[10px] text-secondary">
-        <span>Total Bids: <span className="tabular text-success">{fmtCompact(bids.reduce((s, l) => s + l.qty, 0))} {p.base}</span></span>
+        <span>Total Bids: <span className="tabular text-primary">{fmtCompact(bids.reduce((s, l) => s + l.qty, 0))} {p.base}</span></span>
         <span>Total Asks: <span className="tabular text-danger">{fmtCompact(asks.reduce((s, l) => s + l.qty, 0))} {p.base}</span></span>
       </div>
     </div>
@@ -109,10 +109,10 @@ function BookRow({
   return (
     <div className="relative grid grid-cols-3 gap-2 px-3 py-0.5 text-xs tabular hover:bg-elevated/50">
       <div
-        className={`absolute inset-y-0 right-0 ${isBid ? "kr-depth-bid" : "kr-depth-ask"}`}
+        className={`absolute inset-y-0 right-0 ${isBid ? "bg-primary/10" : "bg-danger/10"}`}
         style={{ width: `${pct}%` }}
       />
-      <span className={`relative ${isBid ? "text-success" : "text-danger"}`}>{fmtPrice(price, decimals)}</span>
+      <span className={`relative ${isBid ? "text-primary" : "text-danger"}`}>{fmtPrice(price, decimals)}</span>
       <span className="relative text-right">{fmtQty(qty, qtyDecimals)}</span>
       <span className="relative text-right text-secondary">{fmtQty(total, qtyDecimals)}</span>
     </div>

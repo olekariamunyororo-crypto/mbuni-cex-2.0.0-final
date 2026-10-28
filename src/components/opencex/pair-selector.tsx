@@ -44,7 +44,7 @@ export function PairSelector() {
         <div className="flex flex-col items-start leading-tight">
           <span className="text-sm font-semibold">{activePair}</span>
           {ticker && (
-            <span className={`text-[10px] tabular ${ticker.priceChangePct >= 0 ? "text-success" : "text-danger"}`}>
+            <span className={`text-[10px] tabular ${ticker.priceChangePct >= 0 ? "text-primary" : "text-danger"}`}>
               {fmtPrice(ticker.lastPrice, 2)} · {fmtPct(ticker.priceChangePct)}
             </span>
           )}
@@ -102,7 +102,7 @@ export function PairSelector() {
                       <span className="font-medium">{p.symbol}</span>
                     </span>
                     <span className="text-right">{t ? fmtPrice(t.lastPrice, p.priceDecimals) : "—"}</span>
-                    <span className={`text-right ${t && t.priceChangePct >= 0 ? "text-success" : "text-danger"}`}>
+                    <span className={`text-right ${t && t.priceChangePct >= 0 ? "text-primary" : "text-danger"}`}>
                       {t ? fmtPct(t.priceChangePct) : "—"}
                     </span>
                     <span className="text-right text-secondary">{t ? fmtCompact(t.quoteVolume) : "—"}</span>

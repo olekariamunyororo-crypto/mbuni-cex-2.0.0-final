@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Cpu, ShieldCheck, CandlestickChart, ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/Button";
 import { ASSET_METADATA } from "@/lib/opencex/seed";
 
 const COINS = ["BTC", "ETH", "SOL", "USDT", "BNB", "XRP", "ARB", "OP"];
@@ -122,7 +123,7 @@ export function WelcomeScreen({ onComplete }: { onComplete: () => void }) {
                 key={i}
                 onClick={() => setIndex(i)}
                 className={`h-1.5 rounded-full transition-all ${
-                  i === index ? "w-8 bg-success" : "w-1.5 bg-elevated-foreground/40 hover:bg-elevated-foreground/70"
+                  i === index ? "w-8 bg-primary" : "w-1.5 bg-elevated-foreground/40 hover:bg-elevated-foreground/70"
                 }`}
               />
             ))}
@@ -137,13 +138,16 @@ export function WelcomeScreen({ onComplete }: { onComplete: () => void }) {
                 <ChevronLeft className="w-5 h-5" />
               </button>
             )}
-            <button
+            <Button
+              variant="primary"
+              size="md"
+              pill
               onClick={next}
-              className="flex items-center gap-2 px-4 py-2 rounded-md bg-success hover:bg-success text-black text-sm font-semibold transition-colors"
+              className="gap-2 px-6"
             >
-              {isLast ? "Get started" : "Continue"}
+              <span>{isLast ? "Get started" : "Continue"}</span>
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -159,7 +163,7 @@ function EngineVisual() {
     <div className="w-full max-w-xs bg-card border border-border rounded-lg p-3 shadow-2xl">
       <div className="flex justify-between text-[10px] text-secondary mb-2">
         <span>BTC/USDT</span>
-        <span className="text-success">LIVE</span>
+        <span className="text-primary">LIVE</span>
       </div>
       <div className="space-y-0.5">
         {[
@@ -179,7 +183,7 @@ function EngineVisual() {
             <span className="relative text-right tabular text-secondary">{l.q.toFixed(2)}</span>
           </motion.div>
         ))}
-        <div className="my-1 py-1 border-y border-border text-center text-sm font-bold tabular text-success">
+        <div className="my-1 py-1 border-y border-border text-center text-sm font-bold tabular text-primary">
           67,285.50
         </div>
         {[
@@ -194,8 +198,8 @@ function EngineVisual() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.4 + i * 0.1 }}
           >
-            <div className="absolute inset-y-0 right-0 bg-success/10" style={{ width: `${l.q * 60}%` }} />
-            <span className="relative text-success tabular">{l.p.toFixed(1)}</span>
+            <div className="absolute inset-y-0 right-0 bg-primary/10" style={{ width: `${l.q * 60}%` }} />
+            <span className="relative text-primary tabular">{l.p.toFixed(1)}</span>
             <span className="relative text-right tabular text-secondary">{l.q.toFixed(2)}</span>
           </motion.div>
         ))}
@@ -277,7 +281,7 @@ function TerminalVisual() {
     <div className="w-full max-w-sm bg-card border border-border rounded-lg p-3 shadow-2xl">
       <div className="flex justify-between text-[10px] text-secondary mb-2">
         <span>BTC/USDT · 1m</span>
-        <span className="text-success">+3.09%</span>
+        <span className="text-primary">+3.09%</span>
       </div>
       <div className="relative h-32 flex items-end gap-1 px-1">
         {candles.map((c, i) => {
@@ -316,14 +320,14 @@ function TerminalVisual() {
         })}
         {/* Animated price line */}
         <motion.div
-          className="absolute left-0 right-0 h-px bg-success"
+          className="absolute left-0 right-0 h-px bg-primary"
           style={{ bottom: "30%" }}
           animate={{ opacity: [0.4, 1, 0.4] }}
           transition={{ duration: 2, repeat: Infinity }}
         />
       </div>
       <div className="mt-2 grid grid-cols-2 gap-1 text-[9px]">
-        <div className="px-2 py-1 rounded bg-success/15 text-success text-center">BUY 0.05 BTC</div>
+        <div className="px-2 py-1 rounded bg-primary/15 text-primary text-center">BUY 0.05 BTC</div>
         <div className="px-2 py-1 rounded bg-danger/15 text-danger text-center">SELL 0.05 BTC</div>
       </div>
     </div>

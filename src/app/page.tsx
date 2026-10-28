@@ -3,7 +3,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useOpenCEX } from "@/lib/opencex/store";
-import { Sidebar, MobileNav } from "@/components/opencex/sidebar";
+import { Sidebar } from "@/components/opencex/sidebar";
+import { MobileNav } from "@/components/opencex/mobile-nav";
 import { TopBar } from "@/components/opencex/top-bar";
 import { MarketsView } from "@/components/opencex/views/markets";
 import { TradingView } from "@/components/opencex/views/trading";

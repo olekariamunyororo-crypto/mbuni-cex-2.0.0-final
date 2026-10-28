@@ -83,20 +83,20 @@ export function PriceChart({ pair }: { pair: string }) {
         <div className="flex items-center gap-2 md:gap-3 min-w-0">
           <span className="text-xs font-semibold uppercase tracking-wider text-secondary shrink-0">{p.symbol}</span>
           {/* Compact change indicator — mobile only */}
-          <span className={`md:hidden px-1.5 py-0.5 rounded text-[10px] ${up ? "bg-success/15 text-success" : "bg-danger/15 text-danger"}`}>
+          <span className={`md:hidden px-1.5 py-0.5 rounded text-[10px] ${up ? "bg-primary/15 text-primary" : "bg-danger/15 text-danger"}`}>
             {up ? "+" : ""}{changePct.toFixed(2)}%
           </span>
           {/* Full OHLC — desktop only */}
           <div className="hidden md:flex items-center gap-1 text-xs tabular">
             <span className="text-secondary">O</span>
-            <span className={up ? "text-success" : "text-danger"}>{fmtPrice(display?.open, p.priceDecimals)}</span>
+            <span className={up ? "text-primary" : "text-danger"}>{fmtPrice(display?.open, p.priceDecimals)}</span>
             <span className="text-secondary ml-1">H</span>
-            <span className={up ? "text-success" : "text-danger"}>{fmtPrice(display?.high, p.priceDecimals)}</span>
+            <span className={up ? "text-primary" : "text-danger"}>{fmtPrice(display?.high, p.priceDecimals)}</span>
             <span className="text-secondary ml-1">L</span>
-            <span className={up ? "text-success" : "text-danger"}>{fmtPrice(display?.low, p.priceDecimals)}</span>
+            <span className={up ? "text-primary" : "text-danger"}>{fmtPrice(display?.low, p.priceDecimals)}</span>
             <span className="text-secondary ml-1">C</span>
-            <span className={up ? "text-success" : "text-danger"}>{fmtPrice(display?.close ?? lastPrice, p.priceDecimals)}</span>
-            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${up ? "bg-success/15 text-success" : "bg-danger/15 text-danger"}`}>
+            <span className={up ? "text-primary" : "text-danger"}>{fmtPrice(display?.close ?? lastPrice, p.priceDecimals)}</span>
+            <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${up ? "bg-primary/15 text-primary" : "bg-danger/15 text-danger"}`}>
               {up ? "+" : ""}{changePct.toFixed(2)}%
             </span>
           </div>

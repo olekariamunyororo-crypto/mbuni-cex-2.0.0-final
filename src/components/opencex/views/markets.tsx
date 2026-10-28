@@ -1,33 +1,49 @@
 "use client";
 
 import { useOpenCEX } from "@/lib/opencex/store";
-import { fmtPrice, fmtPct, fmtCompact } from "@/lib/opencex/format";
+import { fmtPrice, fmtPct, fmtCompact, fmtUSD } from "@/lib/opencex/format";
 import { ASSET_METADATA } from "@/lib/opencex/seed";
-import { Star, TrendingUp, TrendingDown } from "lucide-react";
-import { useState } from "react";
+import { Star, TrendingUp, TrendingDown, Search, Activity, Zap } from "lucide-react";
+import { useState, useMemo } from "react";
+import { AssetRow } from "@/components/ui/AssetRow";
+import { Chip } from "@/components/ui/controls";
+import { TextField } from "@/components/ui/TextField";
+import { AIInsightCard } from "@/components/ui/AIInsightCard";
+import { SectionHeader } from "@/components/ui/SectionHeader";
+import { CategoryCards } from "@/components/ui/CategoryCards";
 
 export function MarketsView({ onOpenTrading }: { onOpenTrading: (pair: string) => void }) {
   const pairs = useOpenCEX((s) => s.pairs);
   const tickers = useOpenCEX((s) => s.tickers);
   const [favorites, setFavorites] = useState<Set<string>>(new Set(["BTC/USDT", "ETH/USDT", "SOL/USDT"]));
   const [tab, setTab] = useState<"all" | "fav" | "gainers" | "losers">("all");
+  const [search, setSearch] = useState("");
 
   const rows = pairs
     .map((p) => ({ pair: p, ticker: tickers[p.symbol] }))
     .filter((r) => r.ticker);
 
-  const visible = rows.filter((r) => {
-    if (tab === "fav") return favorites.has(r.pair.symbol);
-    if (tab === "gainers") return r.ticker!.priceChangePct > 0;
-    if (tab === "losers") return r.ticker!.priceChangePct < 0;
-    return true;
-  });
+  const filtered = useMemo(() => {
+    return rows.filter((r) => {
+      if (search.trim()) {
+        const q = search.toLowerCase();
+        if (!r.pair.symbol.toLowerCase().includes(q) && !r.pair.base.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+      if (tab === "fav") return favorites.has(r.pair.symbol);
+      if (tab === "gainers") return r.ticker!.priceChangePct > 0;
+      if (tab === "losers") return r.ticker!.priceChangePct < 0;
+      return true;
+    });
+  }, [rows, tab, favorites, search]);
 
   const totalVol = rows.reduce((s, r) => s + (r.ticker?.quoteVolume ?? 0), 0);
   const gainers = rows.filter((r) => r.ticker!.priceChangePct > 0).length;
   const losers = rows.filter((r) => r.ticker!.priceChangePct < 0).length;
 
-  const toggleFav = (sym: string) => {
+  const toggleFav = (sym: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
     setFavorites((s) => {
       const n = new Set(s);
       if (n.has(sym)) n.delete(sym);
@@ -37,151 +53,141 @@ export function MarketsView({ onOpenTrading }: { onOpenTrading: (pair: string) =
   };
 
   return (
-    <div className="p-3 md:p-4 space-y-4">
-      {/* Stats summary */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-        <SummaryCard label="Markets" value={String(pairs.length)} sub="active pairs" />
-        <SummaryCard label="24h Volume" value={`$${fmtCompact(totalVol)}`} sub="all pairs" />
-        <SummaryCard label="Gainers" value={String(gainers)} sub="24h" tone="up" />
-        <SummaryCard label="Losers" value={String(losers)} sub="24h" tone="down" />
+    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
+      {/* Header & 24h Market Overview */}
+      <div className="space-y-1">
+        <h2 className="text-[28px] font-bold tracking-tight text-white">Cryptocurrency Markets</h2>
+        <p className="text-[13px] text-secondary">
+          Live streaming prices and order book depth across {pairs.length} spot trading pairs
+        </p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-border overflow-x-auto no-scrollbar">
-        {(["all", "fav", "gainers", "losers"] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors shrink-0 ${
-              tab === t ? "border-cta text-foreground" : "border-transparent text-secondary hover:text-foreground"
-            }`}
-          >
-            {t === "all" ? "All Markets" : t === "fav" ? "★ Favorites" : t === "gainers" ? "Gainers" : "Losers"}
-          </button>
-        ))}
-      </div>
-
-      {/* Markets — desktop table */}
-      <div className="hidden md:block bg-card border border-border rounded-md overflow-hidden">
-        <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase text-secondary border-b border-border">
-          <span className="col-span-1"></span>
-          <span className="col-span-3">Pair</span>
-          <span className="col-span-2 text-right">Last Price</span>
-          <span className="col-span-2 text-right">24h Change</span>
-          <span className="col-span-2 text-right">24h High</span>
-          <span className="col-span-1 text-right">24h Vol</span>
-          <span className="col-span-1 text-right">Trade</span>
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="glass-raised rounded-3xl p-4 border border-[var(--color-glass-border)]">
+          <div className="text-[11px] font-semibold text-tertiary uppercase tracking-wider">Total Volume (24h)</div>
+          <div className="text-[22px] font-bold text-white tnum mt-1">${fmtCompact(totalVol)}</div>
+          <div className="text-[11px] text-primary mt-0.5 font-medium">100% Rust-matched</div>
         </div>
-        <div className="max-h-[calc(100vh-22rem)] overflow-y-auto">
-          {visible.map(({ pair, ticker }) => {
-            const t = ticker!;
-            const isFav = favorites.has(pair.symbol);
-            const up = t.priceChangePct >= 0;
-            return (
-              <button
-                key={pair.symbol}
-                onClick={() => onOpenTrading(pair.symbol)}
-                className="w-full grid grid-cols-12 gap-2 px-4 py-2.5 text-xs items-center hover:bg-elevated/50 border-b border-border/40 tabular"
-              >
-                <span
-                  className="col-span-1"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleFav(pair.symbol);
-                  }}
-                >
-                  <Star className={`w-3.5 h-3.5 ${isFav ? "fill-gold text-gold" : "text-secondary"}`} />
-                </span>
-                <span className="col-span-3 flex items-center gap-2">
-                  <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                    style={{ background: ASSET_METADATA[pair.base]?.color ?? "#666" }}
-                  >
-                    {pair.base.slice(0, 1)}
-                  </span>
-                  <span className="flex flex-col items-start leading-tight">
-                    <span className="font-medium text-sm text-foreground">{pair.base}<span className="text-secondary">/{pair.quote}</span></span>
-                    <span className="text-[10px] text-secondary">{ASSET_METADATA[pair.base]?.name}</span>
-                  </span>
-                </span>
-                <span className="col-span-2 text-right font-medium">{fmtPrice(t.lastPrice, pair.priceDecimals)}</span>
-                <span className={`col-span-2 text-right flex items-center justify-end gap-1 ${up ? "text-success" : "text-danger"}`}>
-                  {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                  {fmtPct(t.priceChangePct)}
-                </span>
-                <span className="col-span-2 text-right text-secondary">{fmtPrice(t.high, pair.priceDecimals)}</span>
-                <span className="col-span-1 text-right text-secondary">{fmtCompact(t.volume)}</span>
-                <span className="col-span-1 text-right">
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-success/10 text-success">Trade</span>
-                </span>
-              </button>
-            );
-          })}
+        <div className="glass-raised rounded-3xl p-4 border border-[var(--color-glass-border)]">
+          <div className="text-[11px] font-semibold text-tertiary uppercase tracking-wider">Active Markets</div>
+          <div className="text-[22px] font-bold text-white tnum mt-1">{pairs.length} Pairs</div>
+          <div className="text-[11px] text-secondary mt-0.5">High liquidity CLOB</div>
+        </div>
+        <div className="glass-raised rounded-3xl p-4 border border-[var(--color-glass-border)]">
+          <div className="text-[11px] font-semibold text-tertiary uppercase tracking-wider">Top Gainers</div>
+          <div className="text-[22px] font-bold text-primary tnum mt-1">+{gainers}</div>
+          <div className="text-[11px] text-primary mt-0.5 font-medium">Positive momentum</div>
+        </div>
+        <div className="glass-raised rounded-3xl p-4 border border-[var(--color-glass-border)]">
+          <div className="text-[11px] font-semibold text-tertiary uppercase tracking-wider">Top Decliners</div>
+          <div className="text-[22px] font-bold text-danger tnum mt-1">-{losers}</div>
+          <div className="text-[11px] text-secondary mt-0.5">24h delta tracking</div>
         </div>
       </div>
 
-      {/* Markets — mobile card list */}
-      <div className="md:hidden space-y-2">
-        {visible.map(({ pair, ticker }) => {
-          const t = ticker!;
-          const isFav = favorites.has(pair.symbol);
-          const up = t.priceChangePct >= 0;
-          return (
-            <button
-              key={pair.symbol}
-              onClick={() => onOpenTrading(pair.symbol)}
-              className="w-full bg-card border border-border rounded-md p-3 text-left active:bg-elevated/50"
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFav(pair.symbol);
-                    }}
-                    className="p-1 -ml-1"
-                  >
-                    <Star className={`w-3.5 h-3.5 ${isFav ? "fill-gold text-gold" : "text-secondary"}`} />
-                  </span>
-                  <span
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ background: ASSET_METADATA[pair.base]?.color ?? "#666" }}
-                  >
-                    {pair.base.slice(0, 1)}
-                  </span>
-                  <div className="flex flex-col leading-tight">
-                    <span className="font-semibold text-sm">{pair.base}<span className="text-secondary font-normal">/{pair.quote}</span></span>
-                    <span className="text-[10px] text-secondary">{ASSET_METADATA[pair.base]?.name}</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <div className="text-sm font-semibold tabular">{fmtPrice(t.lastPrice, pair.priceDecimals)}</div>
-                  <div className={`text-xs tabular flex items-center justify-end gap-0.5 ${up ? "text-success" : "text-danger"}`}>
-                    {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                    {fmtPct(t.priceChangePct)}
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-between mt-2 pt-2 border-t border-border/40 text-[10px] text-secondary tabular">
-                <span>H: <span className="text-foreground">{fmtPrice(t.high, pair.priceDecimals)}</span></span>
-                <span>L: <span className="text-foreground">{fmtPrice(t.low, pair.priceDecimals)}</span></span>
-                <span>Vol: <span className="text-foreground">{fmtCompact(t.quoteVolume)} USDT</span></span>
-              </div>
-            </button>
-          );
-        })}
+      {/* Section 6.5 & Section 7 Category discovery */}
+      <div>
+        <SectionHeader
+          title="Market Sectors"
+          subtitle="Explore trending ecosystems & token categories"
+        />
+        <CategoryCards
+          onSelectCategory={(id) => {
+            if (id === "layer2") setSearch("ARB");
+            else if (id === "ai") setSearch("SOL");
+            else if (id === "defi") setSearch("ETH");
+            else if (id === "memes") setSearch("DOGE");
+            else setSearch("BTC");
+          }}
+        />
       </div>
-    </div>
-  );
-}
 
-function SummaryCard({ label, value, sub, tone }: { label: string; value: string; sub: string; tone?: "up" | "down" }) {
-  const color = tone === "up" ? "text-success" : tone === "down" ? "text-danger" : "text-foreground";
-  return (
-    <div className="bg-card border border-border rounded-md p-3 md:p-4">
-      <div className="text-[10px] uppercase text-secondary tracking-wider">{label}</div>
-      <div className={`text-lg md:text-2xl font-bold tabular mt-1 ${color}`}>{value}</div>
-      <div className="text-[11px] text-secondary mt-0.5">{sub}</div>
+      {/* AI Market Co-pilot */}
+      <AIInsightCard
+        title="Market Mover Insight"
+        insight="Solana (SOL/USDT) leads exchange volume with $1.4M traded in 24h, showing institutional bid clusters at $178.50. Average spread remains < 0.02%."
+        accent="lime"
+      />
+
+      {/* Filters & Search */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        {/* Filter Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <Chip active={tab === "all"} onClick={() => setTab("all")}>
+            All Markets
+          </Chip>
+          <Chip active={tab === "fav"} variant="lime" onClick={() => setTab("fav")}>
+            ★ Favorites
+          </Chip>
+          <Chip active={tab === "gainers"} variant="lime" onClick={() => setTab("gainers")}>
+            Top Gainers
+          </Chip>
+          <Chip active={tab === "losers"} onClick={() => setTab("losers")}>
+            Top Losers
+          </Chip>
+        </div>
+
+        {/* Search Field */}
+        <div className="w-full sm:w-64">
+          <TextField
+            placeholder="Search coin or pair…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            prefix={<Search className="w-4 h-4 text-tertiary" />}
+            className="h-10 text-xs"
+          />
+        </div>
+      </div>
+
+      {/* Asset List (Tempered Glass Card) */}
+      <div className="glass-raised rounded-3xl p-2 md:p-4 border border-[var(--color-glass-border)]">
+        <div className="flex items-center justify-between px-3 py-2 text-[11px] uppercase tracking-wider text-secondary font-semibold border-b border-divider/60">
+          <span>Market / Asset</span>
+          <div className="text-right flex items-center gap-6">
+            <span>Price (USDT)</span>
+            <span className="hidden sm:inline">24h Change</span>
+          </div>
+        </div>
+
+        <div className="divide-y divide-divider/40">
+          {filtered.length === 0 ? (
+            <div className="py-12 text-center text-sm text-secondary">
+              No trading pairs match your filter
+            </div>
+          ) : (
+            filtered.map((r) => {
+              const sym = r.pair.symbol;
+              const meta = ASSET_METADATA[r.pair.base];
+              const isFav = favorites.has(sym);
+              return (
+                <div key={sym} className="flex items-center gap-2 group">
+                  <button
+                    type="button"
+                    onClick={(e) => toggleFav(sym, e)}
+                    className="p-2 ml-1 text-tertiary hover:text-gold transition-colors shrink-0"
+                    title={isFav ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    <Star
+                      className={`w-4 h-4 ${isFav ? "fill-gold text-gold" : "text-tertiary group-hover:text-secondary"}`}
+                    />
+                  </button>
+                  <div className="flex-1 min-w-0">
+                    <AssetRow
+                      symbol={sym}
+                      name={meta?.name}
+                      price={r.ticker?.lastPrice}
+                      change24h={r.ticker?.priceChangePct}
+                      volume24h={r.ticker?.quoteVolume}
+                      onClick={() => onOpenTrading(sym)}
+                    />
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }

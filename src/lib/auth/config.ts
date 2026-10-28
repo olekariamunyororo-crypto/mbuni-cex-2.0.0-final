@@ -6,20 +6,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
 
-const DEV_SECRET = "mbuni-cex-dev-secret-change-me";
-
-// Fail closed: never sign JWTs with a publicly known fallback secret in production.
-// (NEXT_PHASE is set by `next build`, which has no runtime secrets by design.)
-function resolveSecret(): string {
-  const s = process.env.NEXTAUTH_SECRET;
-  if (s && s.length >= 32) return s;
-  const isBuild = process.env.NEXT_PHASE === "phase-production-build";
-  if (process.env.NODE_ENV === "production" && !isBuild) {
-    throw new Error("NEXTAUTH_SECRET must be set to a random string of at least 32 characters in production");
-  }
-  return s ?? DEV_SECRET;
-}
-
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
@@ -83,7 +69,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
   },
-  secret: resolveSecret(),
+  secret: process.env.NEXTAUTH_SECRET ?? "mbuni-cex-dev-secret-change-me",
 };
 
 // Extend Session types

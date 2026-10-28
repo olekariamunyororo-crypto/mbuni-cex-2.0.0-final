@@ -5,6 +5,8 @@ import { useOpenCEX } from "@/lib/opencex/store";
 import { fmtPrice, fmtQty } from "@/lib/opencex/format";
 import type { OrderType, Side } from "@/lib/opencex/types";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 
 const ORDER_TYPES: { key: OrderType; label: string; hint: string }[] = [
   { key: "LIMIT", label: "Limit", hint: "Rest on book at price" },
@@ -16,7 +18,15 @@ const ORDER_TYPES: { key: OrderType; label: string; hint: string }[] = [
 
 const PERCENTS = [25, 50, 75, 100];
 
-export function OrderEntry({ pair, initialSide, onSubmitted }: { pair: string; initialSide?: Side; onSubmitted?: () => void }) {
+export function OrderEntry({
+  pair,
+  initialSide,
+  onSubmitted,
+}: {
+  pair: string;
+  initialSide?: Side;
+  onSubmitted?: () => void;
+}) {
   const placeOrder = useOpenCEX((s) => s.placeOrder);
   const balances = useOpenCEX((s) => s.balances);
   const book = useOpenCEX((s) => s.books[pair]);
@@ -40,7 +50,8 @@ export function OrderEntry({ pair, initialSide, onSubmitted }: { pair: string; i
   const midPrice = book?.midPrice ?? 0;
 
   // Auto-fill price if empty (for LIMIT/POST_ONLY)
-  const effectivePrice = type === "MARKET" ? null : price === "" ? (bestPrice ?? midPrice) : parseFloat(price);
+  const effectivePrice =
+    type === "MARKET" ? null : price === "" ? (bestPrice ?? midPrice) : parseFloat(price);
   const effectiveQty = parseFloat(qty) || 0;
   const cost = effectivePrice ? effectivePrice * effectiveQty : 0;
 
@@ -51,10 +62,10 @@ export function OrderEntry({ pair, initialSide, onSubmitted }: { pair: string; i
       : 0
     : baseBalance;
 
-  // Use Tier 3 fee schedule for this demo user
+  // Tier 3 fee schedule
   const tier = feeSchedules[3] ?? feeSchedules[0];
   const isMaker = type === "LIMIT" || type === "POST_ONLY";
-  const feeBps = isMaker ? tier.makerFee : tier.takerFee;
+  const feeBps = isMaker ? (tier?.makerFee ?? 10) : (tier?.takerFee ?? 18);
   const fee = (cost * feeBps) / 10000;
 
   const submit = () => {
@@ -75,7 +86,9 @@ export function OrderEntry({ pair, initialSide, onSubmitted }: { pair: string; i
       return;
     }
     toast.success(`${side} ${type} order placed`, {
-      description: `${fmtQty(effectiveQty, p?.baseDecimals ?? 4)} ${baseAsset} @ ${effectivePrice ? fmtPrice(effectivePrice, p?.priceDecimals ?? 2) : "market"}`,
+      description: `${fmtQty(effectiveQty, p?.baseDecimals ?? 4)} ${baseAsset} @ ${
+        effectivePrice ? fmtPrice(effectivePrice, p?.priceDecimals ?? 2) : "market"
+      }`,
     });
     setQty("");
     onSubmitted?.();
@@ -89,133 +102,155 @@ export function OrderEntry({ pair, initialSide, onSubmitted }: { pair: string; i
   if (!p) return null;
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="px-3 py-2 border-b border-border">
-        <span className="text-xs font-semibold uppercase tracking-wider text-secondary">Place Order</span>
-      </div>
-
-      {/* Side toggle */}
-      <div className="grid grid-cols-2 gap-1 p-3 pb-2">
+    <div className="flex flex-col h-full p-4 space-y-3">
+      {/* Side toggle with soft semantic fills */}
+      <div className="grid grid-cols-2 gap-1.5 p-1 rounded-2xl bg-surface/90 border border-white/5">
         <button
+          type="button"
           onClick={() => setSide("BUY")}
-          className={`py-1.5 rounded text-sm font-semibold transition-colors ${
-            isBuy ? "bg-success text-black" : "bg-elevated/60 text-secondary hover:bg-elevated"
-          }`}
+          className={cn(
+            "py-2 rounded-xl text-xs font-semibold transition-all duration-150 flex items-center justify-center gap-1",
+            isBuy
+              ? "bg-success-soft text-primary shadow-sm border border-success/30 font-bold"
+              : "text-secondary hover:text-white"
+          )}
         >
           Buy {baseAsset}
         </button>
         <button
+          type="button"
           onClick={() => setSide("SELL")}
-          className={`py-1.5 rounded text-sm font-semibold transition-colors ${
-            !isBuy ? "bg-danger text-white" : "bg-elevated/60 text-secondary hover:bg-elevated"
-          }`}
+          className={cn(
+            "py-2 rounded-xl text-xs font-semibold transition-all duration-150 flex items-center justify-center gap-1",
+            !isBuy
+              ? "bg-danger-soft text-danger shadow-sm border border-danger/30 font-bold"
+              : "text-secondary hover:text-white"
+          )}
         >
           Sell {baseAsset}
         </button>
       </div>
 
       {/* Order type tabs */}
-      <div className="px-3 pb-2 flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1 p-0.5 rounded-xl bg-surface/60 border border-white/5">
         {ORDER_TYPES.map((t) => (
           <button
             key={t.key}
+            type="button"
             onClick={() => setType(t.key)}
             title={t.hint}
-            className={`px-2 py-0.5 text-[11px] rounded ${
-              type === t.key ? "bg-success text-success-foreground" : "bg-elevated/60 text-secondary hover:bg-elevated"
-            }`}
+            className={cn(
+              "flex-1 py-1 px-2 text-[11px] font-medium rounded-lg transition-all text-center whitespace-nowrap",
+              type === t.key
+                ? "bg-elevated text-white shadow-sm border border-white/10"
+                : "text-secondary hover:text-white"
+            )}
           >
             {t.label}
           </button>
         ))}
       </div>
 
-      <div className="px-3 space-y-2">
-        {/* Available */}
-        <div className="flex items-center justify-between text-[11px]">
-          <span className="text-secondary">Available</span>
-          <span className="tabular">{fmtQty(isBuy ? quoteBalance : baseBalance, isBuy ? 2 : p.baseDecimals)} {isBuy ? quoteAsset : baseAsset}</span>
-        </div>
+      {/* Available Balance */}
+      <div className="flex items-center justify-between text-[11px] px-1">
+        <span className="text-secondary font-medium">Available</span>
+        <span className="tnum font-semibold text-white">
+          {fmtQty(availableForOrder, isBuy ? 2 : p.baseDecimals)} {isBuy ? quoteAsset : baseAsset}
+        </span>
+      </div>
 
-        {/* Price input (hidden for market) */}
-        {type !== "MARKET" && (
-          <div>
-            <label className="text-[10px] uppercase text-secondary">Price ({quoteAsset})</label>
-            <div className="flex items-center gap-1 mt-0.5">
-              <input
-                type="number"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                placeholder={bestPrice ? bestPrice.toFixed(p.priceDecimals) : "0.00"}
-                step={p.tickSize}
-                className="flex-1 bg-input border border-border rounded px-2 py-1.5 text-sm tabular focus:outline-none focus:ring-1 focus:ring-ring"
-              />
-              <button
-                onClick={() => setPrice(bestPrice?.toFixed(p.priceDecimals) ?? "")}
-                className="text-[10px] px-2 py-1.5 bg-elevated/60 hover:bg-elevated rounded"
-                title="Use best market price"
-              >
-                Last
-              </button>
-            </div>
+      {/* Price input (hidden for market) */}
+      {type !== "MARKET" ? (
+        <div className="space-y-1">
+          <label className="text-[10px] uppercase tracking-wider text-tertiary block font-semibold px-1">
+            Price ({quoteAsset})
+          </label>
+          <div className="h-10 px-3 rounded-xl flex items-center gap-2 bg-surface/80 border border-[var(--color-glass-border)] focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(163,230,53,0.15)] transition-all">
+            <input
+              type="number"
+              inputMode="decimal"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              placeholder={bestPrice ? bestPrice.toFixed(p.priceDecimals) : "0.00"}
+              step={p.tickSize}
+              className="flex-1 min-w-0 bg-transparent text-sm text-white tnum font-semibold outline-none"
+            />
+            <button
+              type="button"
+              onClick={() => setPrice(bestPrice?.toFixed(p.priceDecimals) ?? "")}
+              className="text-[10px] px-2 py-0.5 bg-white/10 hover:bg-white/15 rounded text-secondary hover:text-white transition-colors"
+            >
+              Mid
+            </button>
           </div>
-        )}
+        </div>
+      ) : (
+        <div className="h-10 px-3 rounded-xl flex items-center justify-between bg-surface/50 border border-white/5 text-xs text-secondary">
+          <span>Market Order</span>
+          <span className="text-white tnum font-medium">Best Price</span>
+        </div>
+      )}
 
-        {/* Quantity */}
-        <div>
-          <label className="text-[10px] uppercase text-secondary">Amount ({baseAsset})</label>
+      {/* Amount input */}
+      <div className="space-y-1">
+        <label className="text-[10px] uppercase tracking-wider text-tertiary block font-semibold px-1">
+          Amount ({baseAsset})
+        </label>
+        <div className="h-10 px-3 rounded-xl flex items-center gap-2 bg-surface/80 border border-[var(--color-glass-border)] focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(163,230,53,0.15)] transition-all">
           <input
             type="number"
+            inputMode="decimal"
             value={qty}
             onChange={(e) => setQty(e.target.value)}
             placeholder="0.00"
             step={p.minQty}
-            className="w-full mt-0.5 bg-input border border-border rounded px-2 py-1.5 text-sm tabular focus:outline-none focus:ring-1 focus:ring-ring"
+            className="flex-1 min-w-0 bg-transparent text-sm text-white tnum font-semibold outline-none"
           />
-        </div>
-
-        {/* Percent buttons */}
-        <div className="grid grid-cols-4 gap-1">
-          {PERCENTS.map((pct) => (
-            <button
-              key={pct}
-              onClick={() => setPercent(pct)}
-              className="py-0.5 text-[11px] bg-elevated/60 hover:bg-elevated rounded"
-            >
-              {pct}%
-            </button>
-          ))}
-        </div>
-
-        {/* Total + fee */}
-        <div className="space-y-1 pt-1">
-          <div className="flex justify-between text-[11px]">
-            <span className="text-secondary">Total</span>
-            <span className="tabular">{fmtPrice(cost, 2)} {quoteAsset}</span>
-          </div>
-          <div className="flex justify-between text-[11px]">
-            <span className="text-secondary">Est. Fee ({isMaker ? "Maker" : "Taker"} · {feeBps}bps)</span>
-            <span className="tabular">{fmtPrice(fee, 2)} {quoteAsset}</span>
-          </div>
-          <div className="flex justify-between text-[11px]">
-            <span className="text-secondary">Max {isBuy ? "Buy" : "Sell"}</span>
-            <span className="tabular">{fmtQty(maxQty, p.baseDecimals)} {baseAsset}</span>
-          </div>
+          <span className="text-secondary text-[11px] font-semibold">{baseAsset}</span>
         </div>
       </div>
 
-      <div className="p-3 mt-auto">
-        <button
+      {/* Percentage quick picks */}
+      <div className="grid grid-cols-4 gap-1">
+        {PERCENTS.map((pct) => (
+          <button
+            key={pct}
+            type="button"
+            onClick={() => setPercent(pct)}
+            className="py-1 rounded-lg text-[11px] font-medium bg-surface/70 hover:bg-white/10 border border-white/5 text-secondary hover:text-white tnum transition-colors"
+          >
+            {pct}%
+          </button>
+        ))}
+      </div>
+
+      {/* Total + fee */}
+      <div className="p-2.5 rounded-xl bg-surface/40 border border-white/5 space-y-1 text-[11px]">
+        <div className="flex justify-between items-center">
+          <span className="text-secondary">Total Value</span>
+          <span className="tnum font-semibold text-white">
+            {fmtPrice(cost, 2)} {quoteAsset}
+          </span>
+        </div>
+        <div className="flex justify-between items-center">
+          <span className="text-secondary">Est. Fee ({isMaker ? "Maker" : "Taker"})</span>
+          <span className="tnum text-tertiary">
+            ≈ {fmtPrice(fee, 4)} {quoteAsset}
+          </span>
+        </div>
+      </div>
+
+      {/* Primary Action Button (always purple CTA per Principle 1) */}
+      <div className="pt-1 mt-auto">
+        <Button
+          variant="primary"
+          size="md"
+          fullWidth
+          loading={submitting}
           onClick={submit}
-          disabled={submitting}
-          className={`w-full py-2 rounded font-semibold text-sm transition-all disabled:opacity-50 ${
-            isBuy
-              ? "bg-success hover:bg-success text-black"
-              : "bg-danger hover:bg-danger text-white"
-          }`}
         >
-          {submitting ? "Submitting…" : `${isBuy ? "Buy" : "Sell"} ${baseAsset}`}
-        </button>
+          {isBuy ? `Buy ${baseAsset}` : `Sell ${baseAsset}`}
+        </Button>
       </div>
     </div>
   );

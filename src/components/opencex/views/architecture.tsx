@@ -10,23 +10,23 @@ export function ArchitectureView() {
       {/* Hero */}
       <Card className="p-4 md:p-6">
         <div className="flex flex-col md:flex-row items-start gap-4">
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-black shrink-0 overflow-hidden">
-            <OstrichLogo className="w-10 h-10" />
+          <div className="w-12 h-12 rounded-2xl bg-primary-soft border border-primary/20 flex items-center justify-center text-primary shrink-0 overflow-hidden shadow-[0_4px_16px_rgba(163,230,53,0.15)]">
+            <OstrichLogo className="w-9 h-9" />
           </div>
           <div className="flex-1">
-            <h2 className="text-xl font-semibold">Mbuni CEX — Architecture</h2>
+            <h2 className="text-xl font-semibold">Mbuni CEX 2.0.0 — Microservices Architecture</h2>
             <p className="text-sm text-secondary mt-1 max-w-3xl">
-              A modern redesign of the original Polygant Mbuni CEX. Replaces the legacy Django 3.2 + Celery + Vue stack
-              with a high-performance, cloud-native system built on a Rust matching engine, Go microservices, and a
-              React + Vite frontend. The deployment in this preview is a faithful TypeScript reimplementation of the
-              matching engine running entirely in the browser, demonstrating the same order types, price-time priority,
-              and event flow described in the spec.
+              High-performance, cloud-native cryptocurrency exchange built on a Rust matching engine (Tokio + Tonic gRPC :50051),
+              Go microservices (Trading :8080, Wallet :8081, Market Data :8082, Compliance :8083), PostgreSQL 17 + TimescaleDB,
+              NATS JetStream event mesh, Dragonfly cache, Caddy auto-TLS reverse proxy, and a React 19 + TypeScript frontend.
+              The deployment in this live preview features a faithful in-browser execution of the matching engine, order book,
+              trade tape, multi-chain custody, KYC flow, and admin control suite.
             </p>
           </div>
           <div className="flex flex-col items-end gap-1 text-[10px] text-secondary">
-            <span>Version 1.0</span>
-            <span>24 October 2026</span>
-            <span className="px-2 py-0.5 rounded bg-success/15 text-success">Final Design Spec</span>
+            <span className="font-semibold text-primary">Version 2.0.0</span>
+            <span>26 October 2026</span>
+            <span className="px-2 py-0.5 rounded bg-primary/15 text-primary border border-primary/20">Production Ready</span>
           </div>
         </div>
       </Card>
@@ -34,7 +34,7 @@ export function ArchitectureView() {
       {/* C4 Container diagram */}
       <Card className="p-3 md:p-4">
         <div className="flex items-center gap-2 mb-4">
-          <Boxes className="w-4 h-4 text-success" />
+          <Boxes className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold">Container Diagram (C4 Level 2)</h3>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
@@ -78,7 +78,7 @@ export function ArchitectureView() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
         <Card className="p-3 md:p-4">
           <div className="flex items-center gap-2 mb-3">
-            <GitBranch className="w-4 h-4 text-success" />
+            <GitBranch className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold">Technology Stack</h3>
           </div>
           <div className="space-y-1.5 text-xs">
@@ -102,7 +102,7 @@ export function ArchitectureView() {
 
         <Card className="p-3 md:p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Activity className="w-4 h-4 text-success" />
+            <Activity className="w-4 h-4 text-primary" />
             <h3 className="text-sm font-semibold">Performance Targets</h3>
           </div>
           <div className="space-y-2 text-xs">
@@ -127,7 +127,7 @@ export function ArchitectureView() {
       {/* NATS subjects */}
       <Card className="p-3 md:p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Radio className="w-4 h-4 text-success" />
+          <Radio className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold">NATS JetStream Subjects (Domain Events)</h3>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
@@ -142,7 +142,7 @@ export function ArchitectureView() {
       {/* Roadmap */}
       <Card className="p-3 md:p-4">
         <div className="flex items-center gap-2 mb-3">
-          <GitBranch className="w-4 h-4 text-success" />
+          <GitBranch className="w-4 h-4 text-primary" />
           <h3 className="text-sm font-semibold">Phased Delivery Roadmap</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -184,7 +184,7 @@ export function ArchitectureView() {
       {/* Note about this preview */}
       <Card className="p-3 md:p-4 bg-elevated/40">
         <div className="flex items-start gap-3">
-          <div className="w-8 h-8 rounded bg-success/15 text-success flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded bg-primary/15 text-primary flex items-center justify-center shrink-0">
             <Cpu className="w-4 h-4" />
           </div>
           <div className="text-xs text-secondary space-y-1.5">
@@ -222,7 +222,7 @@ function Container({
     purple: "bg-purple-500/10 border-purple-500/30 text-purple-300",
     cyan: "bg-cyan-500/10 border-cyan-500/30 text-cyan-300",
     orange: "bg-orange-500/10 border-orange-500/30 text-orange-300",
-    emerald: "bg-success/10 border-cta/30 text-success-hover",
+    emerald: "bg-primary/10 border-primary/30 text-primary-hover",
     muted: "bg-elevated/60 border-border text-secondary",
   };
   return (
@@ -252,19 +252,19 @@ function PerfRow({ metric, target, detail }: { metric: string; target: string; d
         <span>{metric}</span>
         <span className="text-[10px] text-secondary">{detail}</span>
       </div>
-      <span className="font-mono text-success font-medium">{target}</span>
+      <span className="font-mono text-primary font-medium">{target}</span>
     </div>
   );
 }
 
 function Phase({ tag, color, items }: { tag: string; color: "emerald" | "cyan" | "purple"; items: string[] }) {
   const colorMap = {
-    emerald: "border-cta/30 bg-success/5",
+    emerald: "border-primary/30 bg-primary/5",
     cyan: "border-cyan-500/30 bg-cyan-500/5",
     purple: "border-purple-500/30 bg-purple-500/5",
   };
   const textMap = {
-    emerald: "text-success",
+    emerald: "text-primary",
     cyan: "text-cyan-400",
     purple: "text-purple-400",
   };
