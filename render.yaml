@@ -1,0 +1,160 @@
+# render.yaml — Mbuni CEX 2.0 full stack on Render
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Usage:
+#   1. Push this file to the repo root
+#   2. Go to Render Dashboard → New + → Blueprint
+#   3. Select your repo → Render detects render.yaml → Click Apply
+#   4. Manually set sync:false secrets (JWT_SECRET, NEXTAUTH_SECRET) in dashboard
+
+services:
+  # ── Rust Matching Engine ──
+  - type: web
+    name: mbuni-engine
+    runtime: docker
+    dockerfilePath: ./engine/Dockerfile
+    plan: starter
+    envVars:
+      - key: RUST_LOG
+        value: info
+    port: 50051
+    autoDeploy: true
+
+  # ── Go Trading Service ──
+  - type: web
+    name: mbuni-trading
+    runtime: docker
+    dockerfilePath: ./services/Dockerfile
+    dockerContext: .
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 8080
+      - key: ENGINE_ADDR
+        value: mbuni-engine:50051
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mbuni-db
+          property: connectionString
+      - key: NATS_URL
+        value: nats://mbuni-nats:4222
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: mbuni-redis
+          property: connectionString
+      - key: JWT_SECRET
+        sync: false
+    healthCheckPath: /healthz
+    port: 8080
+    dependsOn:
+      - mbuni-engine
+    autoDeploy: true
+
+  # ── Go Wallet Service ──
+  - type: web
+    name: mbuni-wallet
+    runtime: docker
+    dockerfilePath: ./services/Dockerfile
+    dockerContext: .
+    dockerBuildArgs:
+      - key: SERVICE_NAME
+        value: wallet
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 8081
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mbuni-db
+          property: connectionString
+      - key: NATS_URL
+        value: nats://mbuni-nats:4222
+    healthCheckPath: /healthz
+    port: 8081
+    autoDeploy: true
+
+  # ── Go Market Data Service ──
+  - type: web
+    name: mbuni-marketdata
+    runtime: docker
+    dockerfilePath: ./services/Dockerfile
+    dockerContext: .
+    dockerBuildArgs:
+      - key: SERVICE_NAME
+        value: marketdata
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 8082
+      - key: ENGINE_ADDR
+        value: mbuni-engine:50051
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: mbuni-redis
+          property: connectionString
+    healthCheckPath: /healthz
+    port: 8082
+    dependsOn:
+      - mbuni-engine
+    autoDeploy: true
+
+  # ── Go Compliance Service ──
+  - type: web
+    name: mbuni-compliance
+    runtime: docker
+    dockerfilePath: ./services/Dockerfile
+    dockerContext: .
+    dockerBuildArgs:
+      - key: SERVICE_NAME
+        value: compliance
+    plan: starter
+    envVars:
+      - key: PORT
+        value: 8083
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mbuni-db
+          property: connectionString
+    healthCheckPath: /healthz
+    port: 8083
+    autoDeploy: true
+
+  # ── Next.js Frontend ──
+  - type: web
+    name: mbuni-frontend
+    runtime: node
+    plan: starter
+    buildCommand: bun install && bun run build
+    startCommand: bun run start
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: mbuni-db
+          property: connectionString
+      - key: NEXTAUTH_SECRET
+        sync: false
+      - key: NEXTAUTH_URL
+        value: https://mbuni-frontend.onrender.com
+      - key: TRADING_API_URL
+        value: https://mbuni-trading.onrender.com
+      - key: WALLET_API_URL
+        value: https://mbuni-wallet.onrender.com
+      - key: MARKETDATA_API_URL
+        value: https://mbuni-marketdata.onrender.com
+      - key: COMPLIANCE_API_URL
+        value: https://mbuni-compliance.onrender.com
+    healthCheckPath: /api/session
+    port: 3000
+    autoDeploy: true
+
+# ── Databases ──
+databases:
+  - name: mbuni-db
+    databaseName: mbuni_cex
+    user: mbuni
+    plan: starter
+
+  - name: mbuni-redis
+    plan: starter
