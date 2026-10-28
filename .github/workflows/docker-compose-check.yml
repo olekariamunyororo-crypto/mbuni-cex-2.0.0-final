@@ -1,0 +1,44 @@
+# =============================================================================
+# Validate docker-compose files on every change
+# =============================================================================
+
+name: Docker Compose Check
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "docker-compose*.yml"
+      - "Dockerfile"
+      - "services/Dockerfile"
+      - "engine/Dockerfile"
+      - ".github/workflows/docker-compose-check.yml"
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "docker-compose*.yml"
+      - "Dockerfile"
+      - "services/Dockerfile"
+      - "engine/Dockerfile"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  compose-config:
+    name: Validate Compose Config
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate docker-compose.yml
+        run: docker compose -f docker-compose.yml config --quiet
+      - name: Validate docker-compose-2.0.yml
+        run: docker compose -f docker-compose-2.0.yml config --quiet
+      - name: Lint Dockerfiles (hadolint)
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Dockerfile
+          failure-threshold: warning
+        continue-on-error: true
