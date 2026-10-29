@@ -82,6 +82,7 @@ interface MbuniCEXState {
   updateBookFromBinance: (pair: string, bids: Array<[number, number]>, asks: Array<[number, number]>) => void;
   updateTradeFromBinance: (pair: string, price: number, qty: number, side: "BUY" | "SELL", timestamp: number) => void;
   updateTickerFromBinance: (pair: string, lastPrice: number, priceChangePct: number, high: number, low: number, volume: number, quoteVolume: number) => void;
+  setKlineHistory: (pair: string, klines: Kline[]) => void;
   updateKlineFromBinance: (pair: string, openTime: number, open: number, high: number, low: number, close: number, volume: number, isClosed: boolean) => void;
   placeOrder: (params: { pair: string; side: Side; type: Order["type"]; price: number | null; qty: number }) => { ok: boolean; reason?: string; order?: Order };
   cancelOrder: (orderId: string) => void;
@@ -89,6 +90,10 @@ interface MbuniCEXState {
   addWhitelist: (params: { asset: string; chain: string; address: string; label: string }) => void;
   pushEvent: (subject: SystemEvent["subject"], payload: unknown) => void;
 }
+
+const MAX_KLINES = 2000;
+/** Pairs whose candles come from Binance (history/live) rather than the simulator. */
+const liveKlinePairs = new Set<string>();
 
 function uid(prefix = "id") {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
@@ -147,6 +152,7 @@ export const useOpenCEX = create<MbuniCEXState>((set, get) => ({
 
   init: () => {
     if (get().started) return;
+    liveKlinePairs.clear(); // fresh session: candles start as simulated until the live feed supplies real ones
     const engines: Record<string, MatchingEngine> = {};
     const books: Record<string, OrderBookSnapshot> = {};
     const tickers: Record<string, Ticker24h> = {};
@@ -155,7 +161,7 @@ export const useOpenCEX = create<MbuniCEXState>((set, get) => ({
     for (const pair of TRADING_PAIRS) {
       const initial = INITIAL_PRICES[pair.symbol] ?? 100;
       const eng = new MatchingEngine(pair, initial);
-      eng.seedBook(initial, 14, pair.base === "BTC" ? 0.4 : pair.base === "ETH" ? 1.2 : 50);
+      eng.seedBook(initial, 25, pair.base === "BTC" ? 0.4 : pair.base === "ETH" ? 1.2 : 50);
       engines[pair.symbol] = eng;
       books[pair.symbol] = eng.getSnapshot();
       const ks = generateKlines(pair.symbol, initial, 360);
@@ -179,12 +185,20 @@ export const useOpenCEX = create<MbuniCEXState>((set, get) => ({
           const cur = s.klines[pair.symbol];
           if (cur && cur.length > 0) {
             const ks = cur.slice();
-            const last = { ...ks[ks.length - 1] };
-            last.close = t.price;
-            last.high = Math.max(last.high, t.price);
-            last.low = Math.min(last.low, t.price);
-            last.volume = round(last.volume + t.qty, 6);
-            ks[ks.length - 1] = last;
+            const bucket = Math.floor(t.timestamp / 60_000) * 60_000;
+            const prev = ks[ks.length - 1];
+            if (bucket > prev.openTime) {
+              // New minute: roll a fresh candle (previously the last candle absorbed every trade forever).
+              ks.push({ openTime: bucket, open: prev.close, high: Math.max(prev.close, t.price), low: Math.min(prev.close, t.price), close: t.price, volume: round(t.qty, 6) });
+              if (ks.length > MAX_KLINES) ks.splice(0, ks.length - MAX_KLINES);
+            } else {
+              const last = { ...prev };
+              last.close = t.price;
+              last.high = Math.max(last.high, t.price);
+              last.low = Math.min(last.low, t.price);
+              last.volume = round(last.volume + t.qty, 6);
+              ks[ks.length - 1] = last;
+            }
             next.klines = { ...s.klines, [pair.symbol]: ks };
           }
 
@@ -290,6 +304,7 @@ export const useOpenCEX = create<MbuniCEXState>((set, get) => ({
     const state = get();
     if (enabled === state.liveMode) return;
     set({ liveMode: enabled });
+    if (!enabled) liveKlinePairs.clear();
     // When entering live mode, stop the simulated bot interval
     // (real data will drive the display instead)
     if (enabled && state.engineInterval) {
@@ -388,23 +403,35 @@ export const useOpenCEX = create<MbuniCEXState>((set, get) => ({
     }));
   },
 
-  updateKlineFromBinance: (pair, openTime, open, high, low, close, volume, isClosed) => {
+  setKlineHistory: (pair, history) => {
+    liveKlinePairs.add(pair);
     set((s) => {
-      const ks = s.klines[pair] ? [...s.klines[pair]] : [];
-      if (ks.length === 0) {
-        // No history — just add this candle
-        ks.push({ openTime, open, high, low, close, volume });
-        return { klines: { ...s.klines, [pair]: ks } };
-      }
+      // Keep any live candle that already arrived (newer than the fetched history).
+      const existing = liveKlinePairs.has(pair) ? s.klines[pair] ?? [] : [];
+      const lastHist = history.length ? history[history.length - 1].openTime : -Infinity;
+      const merged = history.concat(existing.filter((k) => k.openTime > lastHist));
+      return { klines: { ...s.klines, [pair]: merged.slice(-MAX_KLINES) } };
+    });
+  },
+
+  updateKlineFromBinance: (pair, openTime, open, high, low, close, volume) => {
+    set((s) => {
+      // The simulated history is made-up data around a static price: the first real candle replaces it.
+      const first = !liveKlinePairs.has(pair);
+      liveKlinePairs.add(pair);
+      const ks = first ? [] : [...(s.klines[pair] ?? [])];
+      const candle = { openTime, open, high, low, close, volume };
       const last = ks[ks.length - 1];
-      // If the candle is for the same time period, update it
-      if (last.openTime === openTime) {
-        ks[ks.length - 1] = { openTime, open, high, low, close, volume };
-      } else if (openTime > last.openTime) {
-        // New candle — add it
-        ks.push({ openTime, open, high, low, close, volume });
-        // Keep max 500 candles
-        if (ks.length > 500) ks.shift();
+      if (!last || openTime > last.openTime) {
+        ks.push(candle);
+        if (ks.length > MAX_KLINES) ks.splice(0, ks.length - MAX_KLINES);
+      } else if (last.openTime === openTime) {
+        ks[ks.length - 1] = candle;
+      } else {
+        // Late / out-of-order update for an older candle: replace it if we have it, else ignore.
+        const idx = ks.findIndex((k) => k.openTime === openTime);
+        if (idx >= 0) ks[idx] = candle;
+        else return s;
       }
       return { klines: { ...s.klines, [pair]: ks } };
     });
