@@ -8,13 +8,13 @@ import { ShieldCheck, AlertTriangle, Activity, Users, Database, Cpu, Server, Loc
 import type { ServiceHealth } from "@/lib/opencex/types";
 
 const SERVICES: ServiceHealth[] = [
-  { name: "Matching Engine", language: "Rust", status: "healthy", latencyUs: 312, ready: true, uptime: "42d 6h 12m", version: "1.0.4" },
-  { name: "Trading Service", language: "Go", status: "healthy", latencyUs: 1240, ready: true, uptime: "42d 6h 12m", version: "1.0.4" },
-  { name: "Wallet Service", language: "Go", status: "healthy", latencyUs: 2150, ready: true, uptime: "42d 6h 12m", version: "1.0.4" },
-  { name: "Market Data Service", language: "Go", status: "healthy", latencyUs: 480, ready: true, uptime: "42d 6h 12m", version: "1.0.4" },
-  { name: "Compliance Service", language: "Go", status: "degraded", latencyUs: 5800, ready: true, uptime: "8d 2h 1m", version: "1.0.3" },
-  { name: "API Gateway (Envoy)", language: "Go", status: "healthy", latencyUs: 850, ready: true, uptime: "42d 6h 12m", version: "1.0.4" },
-  { name: "Frontend (React)", language: "React", status: "healthy", latencyUs: 0, ready: true, uptime: "—", version: "1.0.4" },
+  { name: "Matching Engine", language: "Rust", status: "healthy", latencyUs: 285, ready: true, uptime: "64d 14h 22m", version: "2.0.0" },
+  { name: "Trading Service", language: "Go", status: "healthy", latencyUs: 1120, ready: true, uptime: "64d 14h 22m", version: "2.0.0" },
+  { name: "Wallet Service", language: "Go", status: "healthy", latencyUs: 1980, ready: true, uptime: "64d 14h 22m", version: "2.0.0" },
+  { name: "Market Data Service", language: "Go", status: "healthy", latencyUs: 420, ready: true, uptime: "64d 14h 22m", version: "2.0.0" },
+  { name: "Compliance Service", language: "Go", status: "healthy", latencyUs: 1540, ready: true, uptime: "64d 14h 22m", version: "2.0.0" },
+  { name: "API Gateway (Caddy / Envoy)", language: "Go", status: "healthy", latencyUs: 610, ready: true, uptime: "64d 14h 22m", version: "2.0.0" },
+  { name: "Frontend (React 19)", language: "React", status: "healthy", latencyUs: 0, ready: true, uptime: "—", version: "2.0.0" },
 ];
 
 const RISK_ALERTS = [
@@ -32,6 +32,7 @@ export function AdminView() {
   const events = useOpenCEX((s) => s.events);
 
   const totalVol24h = Object.values(tickers).reduce((s, t) => s + (t?.quoteVolume ?? 0), 0);
+  const volDisplay = totalVol24h >= 100_000 ? `$${fmtCompact(totalVol24h)}` : fmtUSD(totalVol24h);
   const verifiedUsers = users.filter((u) => u.kycStatus === "VERIFIED").length;
   const pendingKyc = users.filter((u) => u.kycStatus === "PENDING").length;
 
@@ -39,10 +40,34 @@ export function AdminView() {
     <div className="p-3 md:p-4 space-y-4">
       {/* Top metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
-        <MetricCard icon={Activity} label="24h Volume" value={fmtUSD(totalVol24h)} sub="all markets" tone="up" />
-        <MetricCard icon={Users} label="Total Users" value={String(users.length * 4218)} sub={`${verifiedUsers * 4218} verified`} />
-        <MetricCard icon={AlertTriangle} label="Pending KYC" value={String(pendingKyc * 137)} sub="awaiting review" tone="warn" />
-        <MetricCard icon={ShieldCheck} label="System Health" value="6 / 7" sub="services healthy" tone={SERVICES.filter((s) => s.status === "healthy").length >= 6 ? "up" : "warn"} />
+        <MetricCard
+          icon={Activity}
+          label="24h Volume"
+          value={volDisplay}
+          sub="all markets"
+          tooltip={fmtUSD(totalVol24h)}
+          tone="up"
+        />
+        <MetricCard
+          icon={Users}
+          label="Total Users"
+          value={(users.length * 4218).toLocaleString()}
+          sub={`${(verifiedUsers * 4218).toLocaleString()} verified`}
+        />
+        <MetricCard
+          icon={AlertTriangle}
+          label="Pending KYC"
+          value={(pendingKyc * 137).toLocaleString()}
+          sub="awaiting review"
+          tone="warn"
+        />
+        <MetricCard
+          icon={ShieldCheck}
+          label="System Health"
+          value="6 / 7"
+          sub="services healthy"
+          tone={SERVICES.filter((s) => s.status === "healthy").length >= 6 ? "up" : "warn"}
+        />
       </div>
 
       <Tabs defaultValue="services">
@@ -74,7 +99,7 @@ export function AdminView() {
                     </div>
                   </div>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-medium ${
-                    s.status === "healthy" ? "bg-success/15 text-success" :
+                    s.status === "healthy" ? "bg-primary/15 text-primary" :
                     s.status === "degraded" ? "bg-yellow-500/15 text-gold" :
                     "bg-danger/15 text-danger"
                   }`}>
@@ -84,15 +109,15 @@ export function AdminView() {
                 <div className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
                   <div>
                     <div className="text-secondary">p99 Latency</div>
-                    <div className="tabular font-medium">{s.latencyUs > 0 ? `${s.latencyUs.toLocaleString()} µs` : "—"}</div>
+                    <div className="tnum font-medium">{s.latencyUs > 0 ? `${s.latencyUs.toLocaleString()} µs` : "—"}</div>
                   </div>
                   <div>
                     <div className="text-secondary">Ready</div>
-                    <div className={s.ready ? "text-success" : "text-danger"}>{s.ready ? "✓ /readyz" : "✗ /readyz"}</div>
+                    <div className={s.ready ? "text-primary" : "text-danger"}>{s.ready ? "✓ /readyz" : "✗ /readyz"}</div>
                   </div>
                   <div>
                     <div className="text-secondary">Uptime</div>
-                    <div className="tabular font-medium">{s.uptime}</div>
+                    <div className="tnum font-medium">{s.uptime}</div>
                   </div>
                 </div>
               </Card>
@@ -132,10 +157,10 @@ export function AdminView() {
             {users.map((u) => (
               <div key={u.id} className="grid grid-cols-7 gap-2 px-4 py-2 text-xs items-center border-b border-border/40 hover:bg-elevated/40">
                 <span className="col-span-2 font-medium truncate">{u.email}</span>
-                <span className={u.kycStatus === "VERIFIED" ? "text-success" : u.kycStatus === "PENDING" ? "text-gold" : "text-secondary"}>{u.kycStatus}</span>
+                <span className={u.kycStatus === "VERIFIED" ? "text-primary" : u.kycStatus === "PENDING" ? "text-gold" : "text-secondary"}>{u.kycStatus}</span>
                 <span><span className="px-1.5 py-0.5 rounded bg-elevated text-[10px]">T{u.tier}</span></span>
-                <span className={u.twoFA ? "text-success" : "text-secondary"}>{u.twoFA ? "Enabled" : "Off"}</span>
-                <span className={u.passkey ? "text-success" : "text-secondary"}>{u.passkey ? "Bound" : "—"}</span>
+                <span className={u.twoFA ? "text-primary" : "text-secondary"}>{u.twoFA ? "Enabled" : "Off"}</span>
+                <span className={u.passkey ? "text-primary" : "text-secondary"}>{u.passkey ? "Bound" : "—"}</span>
                 <span className="text-secondary text-[11px]">{fmtDateTime(u.createdAt)}</span>
               </div>
             ))}
@@ -166,7 +191,7 @@ export function AdminView() {
 
           <Card className="p-4">
             <div className="flex items-center gap-2 mb-2">
-              <Lock className="w-4 h-4 text-success" />
+              <Lock className="w-4 h-4 text-primary" />
               <span className="text-sm font-semibold">Custody Controls</span>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs">
@@ -195,14 +220,16 @@ export function AdminView() {
             {pairs.map((p) => {
               const t = tickers[p.symbol];
               return (
-                <div key={p.symbol} className="grid grid-cols-6 gap-2 px-4 py-2 text-xs items-center border-b border-border/40 tabular hover:bg-elevated/40">
+                <div key={p.symbol} className="grid grid-cols-6 gap-2 px-4 py-2 text-xs items-center border-b border-border/40 tnum hover:bg-elevated/40">
                   <span className="font-medium">{p.symbol}</span>
                   <span className="text-secondary">{p.base} / {p.quote}</span>
                   <span className="text-right">{p.tickSize}</span>
                   <span className="text-right">{p.minQty}</span>
-                  <span className="text-right">{t ? fmtUSD(t.quoteVolume) : "—"}</span>
+                  <span className="text-right font-medium" title={t ? fmtUSD(t.quoteVolume) : undefined}>
+                    {t ? (t.quoteVolume >= 100_000 ? `$${fmtCompact(t.quoteVolume)}` : fmtUSD(t.quoteVolume)) : "—"}
+                  </span>
                   <span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] ${p.status === "ACTIVE" ? "bg-success/15 text-success" : "bg-yellow-500/15 text-gold"}`}>
+                    <span className={`px-1.5 py-0.5 rounded text-[10px] ${p.status === "ACTIVE" ? "bg-primary/15 text-primary" : "bg-yellow-500/15 text-gold"}`}>
                       {p.status}
                     </span>
                   </span>
@@ -226,11 +253,11 @@ export function AdminView() {
               <span className="text-right">Taker</span>
             </div>
             {feeSchedules.map((f) => (
-              <div key={f.tier} className="grid grid-cols-5 gap-2 px-4 py-2.5 text-xs items-center border-b border-border/40 tabular hover:bg-elevated/40">
+              <div key={f.tier} className="grid grid-cols-5 gap-2 px-4 py-2.5 text-xs items-center border-b border-border/40 tnum hover:bg-elevated/40">
                 <span className="font-medium">T{f.tier}</span>
                 <span>{f.label}</span>
                 <span className="text-right">{fmtUSD(f.volumeUSD)}</span>
-                <span className="text-right text-success">{f.makerFee === 0 ? "Free" : `${f.makerFee} bps`}</span>
+                <span className="text-right text-primary">{f.makerFee === 0 ? "Free" : `${f.makerFee} bps`}</span>
                 <span className="text-right">{f.takerFee} bps</span>
               </div>
             ))}
@@ -251,10 +278,10 @@ export function AdminView() {
               )}
               {events.map((ev) => (
                 <div key={ev.id} className="px-4 py-1.5 text-xs border-b border-border/40 hover:bg-elevated/40 flex items-center gap-3">
-                  <span className="text-[10px] text-secondary tabular w-20">{fmtDateTime(ev.timestamp).split(" ")[1]}</span>
+                  <span className="text-[10px] text-secondary tnum w-20">{fmtDateTime(ev.timestamp).split(" ")[1]}</span>
                   <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono ${
                     ev.subject.startsWith("orders") ? "bg-blue-500/15 text-blue-400" :
-                    ev.subject.startsWith("trades") ? "bg-success/15 text-success" :
+                    ev.subject.startsWith("trades") ? "bg-primary/15 text-primary" :
                     ev.subject.startsWith("balances") ? "bg-purple-500/15 text-purple-400" :
                     ev.subject.startsWith("deposits") ? "bg-cyan-500/15 text-cyan-400" :
                     "bg-orange-500/15 text-orange-400"
@@ -274,24 +301,56 @@ export function AdminView() {
   );
 }
 
-function MetricCard({ icon: Icon, label, value, sub, tone }: { icon: React.ComponentType<{ className?: string }>; label: string; value: string; sub: string; tone?: "up" | "warn" | "down" }) {
-  const color = tone === "up" ? "text-success" : tone === "warn" ? "text-gold" : tone === "down" ? "text-danger" : "text-foreground";
+function MetricCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  tone,
+  tooltip,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  sub: string;
+  tone?: "up" | "warn" | "down";
+  tooltip?: string;
+}) {
+  const color =
+    tone === "up"
+      ? "text-primary"
+      : tone === "warn"
+      ? "text-gold"
+      : tone === "down"
+      ? "text-danger"
+      : "text-white";
   return (
-    <Card className="p-3 md:p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase text-secondary tracking-wider">{label}</span>
-        <Icon className="w-4 h-4 text-secondary" />
+    <div
+      className="glass-raised rounded-2xl p-3 md:p-4 border border-[var(--color-glass-border)] shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_0_var(--color-glass-highlight)] min-w-0 flex flex-col justify-between overflow-hidden"
+      title={tooltip || value}
+    >
+      <div className="flex items-center justify-between gap-1.5 min-w-0">
+        <span className="text-[10px] sm:text-[11px] uppercase text-secondary tracking-wider font-semibold truncate">
+          {label}
+        </span>
+        <Icon className="w-4 h-4 text-secondary shrink-0" />
       </div>
-      <div className={`text-lg md:text-2xl font-bold tabular mt-1 ${color}`}>{value}</div>
-      <div className="text-[11px] text-secondary mt-0.5">{sub}</div>
-    </Card>
+      <div className="mt-2 min-w-0">
+        <div
+          className={`text-base sm:text-lg md:text-xl lg:text-2xl font-bold tnum truncate tracking-tight leading-tight ${color}`}
+        >
+          {value}
+        </div>
+        <div className="text-[11px] text-secondary mt-1 truncate block">{sub}</div>
+      </div>
+    </div>
   );
 }
 
 function InfraItem({ name, status, detail }: { name: string; status: string; detail: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className={`w-2 h-2 rounded-full ${status === "healthy" ? "bg-success" : "bg-yellow-400"}`} />
+      <span className={`w-2 h-2 rounded-full ${status === "healthy" ? "bg-primary" : "bg-yellow-400"}`} />
       <div className="flex-1 min-w-0">
         <div className="font-medium truncate">{name}</div>
         <div className="text-[10px] text-secondary truncate">{detail}</div>
@@ -306,7 +365,7 @@ function ControlRow({ label, value, status }: { label: string; value: string; st
       <span className="text-secondary">{label}</span>
       <div className="flex items-center gap-2">
         <span className="text-foreground">{value}</span>
-        <span className={`px-1.5 py-0.5 rounded text-[10px] ${status === "active" ? "bg-success/15 text-success" : "bg-elevated text-secondary"}`}>
+        <span className={`px-1.5 py-0.5 rounded text-[10px] ${status === "active" ? "bg-primary/15 text-primary" : "bg-elevated text-secondary"}`}>
           {status}
         </span>
       </div>

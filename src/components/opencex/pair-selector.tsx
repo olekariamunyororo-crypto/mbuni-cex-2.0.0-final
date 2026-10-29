@@ -5,6 +5,7 @@ import { fmtPrice, fmtPct, fmtCompact } from "@/lib/opencex/format";
 import { useState } from "react";
 import { ChevronDown, Search, Star } from "lucide-react";
 import { ASSET_METADATA } from "@/lib/opencex/seed";
+import { CoinIcon } from "@/components/opencex/coin-icon";
 
 export function PairSelector() {
   const pairs = useOpenCEX((s) => s.pairs);
@@ -36,15 +37,12 @@ export function PairSelector() {
         className="flex items-center gap-2 px-2 md:px-3 py-1.5 rounded hover:bg-elevated/70 min-w-[140px] md:min-w-[180px]"
       >
         {active && (
-          <div className="w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-               style={{ background: ASSET_METADATA[active.base]?.color ?? "#666" }}>
-            {active.base.slice(0, 2)}
-          </div>
+          <CoinIcon asset={active.base} size={24} />
         )}
         <div className="flex flex-col items-start leading-tight">
           <span className="text-sm font-semibold">{activePair}</span>
           {ticker && (
-            <span className={`text-[10px] tabular ${ticker.priceChangePct >= 0 ? "text-success" : "text-danger"}`}>
+            <span className={`text-[10px] tabular ${ticker.priceChangePct >= 0 ? "text-primary" : "text-danger"}`}>
               {fmtPrice(ticker.lastPrice, 2)} · {fmtPct(ticker.priceChangePct)}
             </span>
           )}
@@ -93,16 +91,11 @@ export function PairSelector() {
                         className={`w-3 h-3 ${favorites.has(p.symbol) ? "fill-gold text-gold" : "text-secondary"}`}
                         onClick={(e) => toggleFav(p.symbol, e)}
                       />
-                      <span
-                        className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white"
-                        style={{ background: ASSET_METADATA[p.base]?.color ?? "#666" }}
-                      >
-                        {p.base.slice(0, 1)}
-                      </span>
+                      <CoinIcon asset={p.base} size={16} />
                       <span className="font-medium">{p.symbol}</span>
                     </span>
                     <span className="text-right">{t ? fmtPrice(t.lastPrice, p.priceDecimals) : "—"}</span>
-                    <span className={`text-right ${t && t.priceChangePct >= 0 ? "text-success" : "text-danger"}`}>
+                    <span className={`text-right ${t && t.priceChangePct >= 0 ? "text-primary" : "text-danger"}`}>
                       {t ? fmtPct(t.priceChangePct) : "—"}
                     </span>
                     <span className="text-right text-secondary">{t ? fmtCompact(t.quoteVolume) : "—"}</span>

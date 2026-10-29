@@ -88,3 +88,51 @@ describe("store settlement", () => {
     expect(estimateBuyCost([{ price: 10, qty: 1 }], 3)).toBeCloseTo(30);
   });
 });
+
+describe("candles", () => {
+  beforeEach(fresh);
+  const minute = () => Math.floor(Date.now() / 60_000) * 60_000;
+
+  it("synthetic history is minute-aligned", () => {
+    const ks = useOpenCEX.getState().klines[PAIR];
+    expect(ks.every((k) => k.openTime % 60_000 === 0)).toBe(true);
+  });
+
+  it("first live candle replaces the simulated history (was silently dropped)", () => {
+    useOpenCEX.getState().updateKlineFromBinance(PAIR, minute(), 110000, 110100, 109900, 110050, 5, false);
+    const ks = useOpenCEX.getState().klines[PAIR];
+    expect(ks).toHaveLength(1);
+    expect(ks[0].close).toBe(110050);
+  });
+
+  it("same-minute updates replace, next minute appends, stale updates are ignored", () => {
+    const t = minute();
+    const u = useOpenCEX.getState().updateKlineFromBinance;
+    u(PAIR, t, 1, 2, 0.5, 1.5, 1, false);
+    u(PAIR, t, 1, 3, 0.5, 2.5, 2, false);
+    u(PAIR, t + 60_000, 2.5, 3, 2, 2.8, 1, false);
+    u(PAIR, t - 600_000, 9, 9, 9, 9, 9, true); // unknown older candle
+    const ks = useOpenCEX.getState().klines[PAIR];
+    expect(ks.map((k) => k.close)).toEqual([2.5, 2.8]);
+  });
+
+  it("history from REST is kept and live candles merge onto it", () => {
+    const t = minute();
+    const hist = [t - 120_000, t - 60_000].map((openTime) => ({ openTime, open: 1, high: 2, low: 0.5, close: 1.5, volume: 1 }));
+    useOpenCEX.getState().setKlineHistory(PAIR, hist);
+    useOpenCEX.getState().updateKlineFromBinance(PAIR, t, 1.5, 2, 1, 1.8, 1, false);
+    const ks = useOpenCEX.getState().klines[PAIR];
+    expect(ks.map((k) => k.openTime)).toEqual([t - 120_000, t - 60_000, t]);
+  });
+
+  it("simulated trades roll a new candle each minute", () => {
+    const before = useOpenCEX.getState().klines[PAIR];
+    const lastOpen = before[before.length - 1].openTime;
+    const eng = useOpenCEX.getState().engines[PAIR];
+    // pretend the last candle is two minutes old
+    useOpenCEX.setState({ klines: { ...useOpenCEX.getState().klines, [PAIR]: before.map((k, i) => (i === before.length - 1 ? { ...k, openTime: lastOpen - 120_000 } : k)) } });
+    eng.placeOrder({ pair: PAIR, side: "BUY", type: "MARKET", price: null, qty: 0.01, userId: "x" });
+    const after = useOpenCEX.getState().klines[PAIR];
+    expect(after.length).toBe(before.length + 1);
+  });
+});

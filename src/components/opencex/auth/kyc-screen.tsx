@@ -16,7 +16,7 @@ import {
   User,
   CreditCard,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
+import { useSession, apiGetKyc, apiSubmitKyc } from "next-auth/react";
 import { OstrichLogo } from "@/components/opencex/ostrich-logo";
 import { toast } from "sonner";
 
@@ -59,10 +59,9 @@ export function KycScreen({ onComplete }: { onComplete: () => void }) {
     if (step !== "pending") return;
     const interval = setInterval(async () => {
       try {
-        const res = await fetch("/api/kyc");
-        const data = await res.json();
+        const data = await apiGetKyc();
         if (data.ok && data.kyc) {
-          setKycStatus(data.kyc.kycStatus);
+          setKycStatus(data.kyc.kycStatus ?? "PENDING");
           if (data.kyc.kycStatus === "VERIFIED") {
             setStep("done");
             clearInterval(interval);
@@ -83,23 +82,18 @@ export function KycScreen({ onComplete }: { onComplete: () => void }) {
   const submitKyc = async () => {
     setSubmitting(true);
     try {
-      const res = await fetch("/api/kyc", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          documentType: docType,
-          documentNumber: docNumber,
-          fullName,
-          dob,
-          address,
-          city,
-          country,
-        }),
+      const data = await apiSubmitKyc({
+        documentType: docType,
+        documentNumber: docNumber,
+        fullName,
+        dob,
+        address,
+        city,
+        country,
       });
-      const data = await res.json();
       if (!data.ok) {
         if (data.status === "REJECTED") {
-          setRejectReason(data.reason);
+          setRejectReason(data.reason ?? "Documents rejected");
           setStep("review");
         } else {
           toast.error(data.error ?? "KYC submission failed");
@@ -127,7 +121,7 @@ export function KycScreen({ onComplete }: { onComplete: () => void }) {
       {/* Header + progress */}
       <div className="relative px-6 pt-6 max-w-2xl mx-auto w-full">
         <div className="flex items-center gap-2 mb-4">
-          <div className="w-8 h-8 rounded-lg bg-elevated flex items-center justify-center text-success overflow-hidden">
+          <div className="w-8 h-8 rounded-lg bg-elevated flex items-center justify-center text-primary overflow-hidden">
             <OstrichLogo className="w-7 h-7" />
           </div>
           <span className="font-bold text-sm">Mbuni CEX · Identity Verification</span>
@@ -139,8 +133,8 @@ export function KycScreen({ onComplete }: { onComplete: () => void }) {
             const adjusted = step === "pending" ? 3 : step === "done" ? 4 : activeIdx;
             return (
               <div key={s} className="flex-1">
-                <div className={`h-1 rounded-full transition-colors ${i <= adjusted ? "bg-success" : "bg-elevated"}`} />
-                <div className={`text-[10px] mt-1.5 ${i === adjusted ? "text-foreground font-medium" : "text-muted"}`}>{s}</div>
+                <div className={`h-1 rounded-full transition-colors ${i <= adjusted ? "bg-primary" : "bg-elevated"}`} />
+                <div className={`text-[10px] mt-1.5 ${i === adjusted ? "text-foreground font-medium" : "text-tertiary"}`}>{s}</div>
               </div>
             );
           })}
@@ -227,10 +221,10 @@ function DocumentStep({ docType, setDocType, docNumber, setDocNumber, fullName, 
           const active = docType === d.key;
           return (
             <button key={d.key} onClick={() => setDocType(d.key)}
-              className={`p-3 rounded-xl border text-left transition-all ${active ? "border-cta bg-success/10" : "border-line hover:bg-elevated"}`}>
-              <Icon className={`w-5 h-5 mb-2 ${active ? "text-success" : "text-secondary"}`} />
+              className={`p-3 rounded-xl border text-left transition-all ${active ? "border-primary bg-primary/10" : "border-line hover:bg-elevated"}`}>
+              <Icon className={`w-5 h-5 mb-2 ${active ? "text-primary" : "text-secondary"}`} />
               <div className="text-xs font-medium">{d.label}</div>
-              <div className="text-[10px] text-muted mt-0.5">{d.description}</div>
+              <div className="text-[10px] text-tertiary mt-0.5">{d.description}</div>
             </button>
           );
         })}
@@ -240,25 +234,25 @@ function DocumentStep({ docType, setDocType, docNumber, setDocNumber, fullName, 
       <label className="text-[10px] uppercase tracking-wider text-secondary block mb-1">{docType === "NATIONAL_ID" ? "ID Number" : docType === "PASSPORT" ? "Passport Number" : "License Number"}</label>
       <input type="text" value={docNumber} onChange={(e) => setDocNumber(e.target.value)}
         placeholder={docType === "NATIONAL_ID" ? "12345678" : "A1234567B"}
-        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-cta" />
+        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-primary" />
 
       {/* Full name */}
       <label className="text-[10px] uppercase tracking-wider text-secondary block mb-1">Full name (as on document)</label>
       <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)}
         placeholder="John Doe Mwangi"
-        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-cta" />
+        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-primary" />
 
       {/* DOB */}
       <label className="text-[10px] uppercase tracking-wider text-secondary block mb-1">Date of birth</label>
       <input type="date" value={dob} onChange={(e) => setDob(e.target.value)}
-        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-cta" />
+        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-primary" />
 
       {/* Document upload (simulated) */}
       <label className="text-[10px] uppercase tracking-wider text-secondary block mb-1">Upload document (front)</label>
       <div className="border border-dashed border-line rounded-xl p-4 text-center mb-4 cursor-pointer hover:bg-elevated transition-colors"
         onClick={() => setDocFront(`${docType}_front_${Date.now()}.jpg`)}>
         {docFront ? (
-          <div className="flex items-center justify-center gap-2 text-success">
+          <div className="flex items-center justify-center gap-2 text-primary">
             <Check className="w-4 h-4" />
             <span className="text-xs">{docFront}</span>
           </div>
@@ -288,12 +282,12 @@ function SelfieStep({ selfie, setSelfie, canProceed, onNext, onBack }: any) {
       <div className="border border-dashed border-line rounded-3xl p-8 text-center mb-4 cursor-pointer hover:bg-elevated transition-colors"
         onClick={() => setSelfie(`selfie_${Date.now()}.jpg`)}>
         {selfie ? (
-          <div className="flex flex-col items-center gap-3 text-success">
-            <div className="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 text-primary">
+            <div className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center">
               <Check className="w-10 h-10" />
             </div>
             <span className="text-xs">{selfie}</span>
-            <span className="text-[11px] text-muted">Liveness check passed</span>
+            <span className="text-[11px] text-tertiary">Liveness check passed</span>
           </div>
         ) : (
           <div className="text-secondary">
@@ -301,13 +295,13 @@ function SelfieStep({ selfie, setSelfie, canProceed, onNext, onBack }: any) {
               <Camera className="w-8 h-8" />
             </div>
             <span className="text-xs">Tap to take a selfie</span>
-            <p className="text-[11px] text-muted mt-1">Look directly at the camera. Good lighting required.</p>
+            <p className="text-[11px] text-tertiary mt-1">Look directly at the camera. Good lighting required.</p>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2 mb-4 text-[11px] text-muted">
-        <ShieldCheck className="w-3 h-3 text-success shrink-0" />
+      <div className="flex items-center gap-2 mb-4 text-[11px] text-tertiary">
+        <ShieldCheck className="w-3 h-3 text-primary shrink-0" />
         <span>Your biometric data is encrypted, never shared, and deleted after verification.</span>
       </div>
 
@@ -334,22 +328,22 @@ function AddressStep({ address, setAddress, city, setCity, country, setCountry, 
       <label className="text-[10px] uppercase tracking-wider text-secondary block mb-1">Residential address</label>
       <input type="text" value={address} onChange={(e) => setAddress(e.target.value)}
         placeholder="123 Moi Avenue, Westlands"
-        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-cta" />
+        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-primary" />
 
       <label className="text-[10px] uppercase tracking-wider text-secondary block mb-1">City</label>
       <input type="text" value={city} onChange={(e) => setCity(e.target.value)}
         placeholder="Nairobi"
-        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-cta" />
+        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-primary" />
 
       <label className="text-[10px] uppercase tracking-wider text-secondary block mb-1">Country</label>
       <input type="text" value={country} onChange={(e) => setCountry(e.target.value)}
-        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-cta" />
+        className="w-full bg-surface border border-line rounded-xl px-3 py-2.5 text-sm mb-4 focus:outline-none focus:border-primary" />
 
       <label className="text-[10px] uppercase tracking-wider text-secondary block mb-1">Upload proof of address</label>
       <div className="border border-dashed border-line rounded-xl p-4 text-center mb-4 cursor-pointer hover:bg-elevated transition-colors"
         onClick={() => setAddressDoc(`address_${Date.now()}.pdf`)}>
         {addressDoc ? (
-          <div className="flex items-center justify-center gap-2 text-success">
+          <div className="flex items-center justify-center gap-2 text-primary">
             <Check className="w-4 h-4" />
             <span className="text-xs">{addressDoc}</span>
           </div>
@@ -357,7 +351,7 @@ function AddressStep({ address, setAddress, city, setCity, country, setCountry, 
           <div className="text-secondary">
             <FileText className="w-6 h-6 mx-auto mb-1" />
             <span className="text-xs">Utility bill, bank statement, or lease</span>
-            <p className="text-[11px] text-muted mt-0.5">Must be less than 3 months old</p>
+            <p className="text-[11px] text-tertiary mt-0.5">Must be less than 3 months old</p>
           </div>
         )}
       </div>
@@ -401,7 +395,7 @@ function ReviewStep({ docType, docNumber, fullName, dob, address, city, country,
       </div>
 
       <div className="bg-elevated rounded-xl p-3 mb-5 flex items-start gap-2">
-        <ShieldCheck className="w-4 h-4 text-success mt-0.5 shrink-0" />
+        <ShieldCheck className="w-4 h-4 text-primary mt-0.5 shrink-0" />
         <div className="text-[11px] text-secondary">
           By submitting, you consent to identity verification and AML screening under Kenya's VASP Regulations (LN 134, 2026). Your data is encrypted and stored in compliance with the Kenya Data Protection Act, 2019.
         </div>
@@ -451,18 +445,18 @@ function DoneStep({ onComplete }: { onComplete: () => void }) {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-        className="w-20 h-20 rounded-full bg-success/20 flex items-center justify-center mx-auto mb-6"
+        className="w-20 h-20 rounded-full bg-primary/20 flex items-center justify-center mx-auto mb-6"
       >
-        <Check className="w-10 h-10 text-success" />
+        <Check className="w-10 h-10 text-primary" />
       </motion.div>
       <h2 className="text-2xl font-bold">Identity verified!</h2>
       <p className="text-sm text-secondary mt-2 max-w-xs mx-auto">
         Your account is now verified. You can trade on Mbuni CEX.
       </p>
-      <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-success/10 text-success text-xs font-medium">
+      <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-medium">
         <ShieldCheck className="w-3.5 h-3.5" /> KYC Verified · Tier 1
       </div>
-      <p className="text-[11px] text-muted mt-6">Redirecting to trading terminal...</p>
+      <p className="text-[11px] text-tertiary mt-6">Redirecting to trading terminal...</p>
     </div>
   );
 }
@@ -471,7 +465,7 @@ function DoneStep({ onComplete }: { onComplete: () => void }) {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between items-center py-1">
-      <span className="text-[11px] text-muted">{label}</span>
+      <span className="text-[11px] text-tertiary">{label}</span>
       <span className="text-sm font-medium text-right">{value}</span>
     </div>
   );
@@ -480,10 +474,10 @@ function Row({ label, value }: { label: string; value: string }) {
 function ChecklistItem({ label, done, inProgress, pending }: { label: string; done?: boolean; inProgress?: boolean; pending?: boolean }) {
   return (
     <div className="flex items-center gap-2 text-xs">
-      {done && <Check className="w-4 h-4 text-success shrink-0" />}
+      {done && <Check className="w-4 h-4 text-primary shrink-0" />}
       {inProgress && <Loader2 className="w-4 h-4 text-gold animate-spin shrink-0" />}
       {pending && <div className="w-4 h-4 rounded-full border border-tertiary shrink-0" />}
-      <span className={done ? "text-secondary" : inProgress ? "text-foreground" : "text-muted"}>{label}</span>
+      <span className={done ? "text-secondary" : inProgress ? "text-foreground" : "text-tertiary"}>{label}</span>
     </div>
   );
 }

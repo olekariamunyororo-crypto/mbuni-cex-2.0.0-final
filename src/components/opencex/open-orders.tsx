@@ -1,16 +1,16 @@
 "use client";
-
 import { useMemo } from "react";
 import { useOpenCEX } from "@/lib/opencex/store";
 import { fmtPrice, fmtQty, fmtDateTime } from "@/lib/opencex/format";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
+import { CoinIcon } from "@/components/opencex/coin-icon";
 import { X } from "lucide-react";
 import type { Order } from "@/lib/opencex/types";
 
 const STATUS_COLOR: Record<Order["status"], string> = {
   NEW: "text-blue-400",
   PARTIALLY_FILLED: "text-gold",
-  FILLED: "text-success",
+  FILLED: "text-primary",
   CANCELLED: "text-secondary",
   REJECTED: "text-danger",
 };
@@ -60,9 +60,14 @@ export function OpenOrders({ pair }: { pair?: string }) {
               return (
                 <tr key={o.id} className="border-b border-border/50 hover:bg-elevated/40 tabular">
                   <td className="px-3 py-1.5 text-secondary">{fmtDateTime(o.timestamp)}</td>
-                  <td className="px-3 py-1.5 font-medium">{o.pair}</td>
+                  <td className="px-3 py-1.5 font-medium">
+                    <span className="inline-flex items-center gap-1.5">
+                      <CoinIcon asset={o.pair.split("/")[0]} size={14} />
+                      {o.pair}
+                    </span>
+                  </td>
                   <td className="px-3 py-1.5">{o.type}</td>
-                  <td className={`px-3 py-1.5 ${o.side === "BUY" ? "text-success" : "text-danger"}`}>{o.side}</td>
+                  <td className={`px-3 py-1.5 ${o.side === "BUY" ? "text-primary" : "text-danger"}`}>{o.side}</td>
                   <td className="px-3 py-1.5 text-right">{o.price !== null ? fmtPrice(o.price, p?.priceDecimals ?? 2) : "—"}</td>
                   <td className="px-3 py-1.5 text-right">{fmtQty(o.qty, p?.baseDecimals ?? 4)}</td>
                   <td className="px-3 py-1.5 text-right">{fmtQty(o.filledQty, p?.baseDecimals ?? 4)}</td>

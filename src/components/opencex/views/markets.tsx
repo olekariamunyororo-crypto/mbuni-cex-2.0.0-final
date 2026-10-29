@@ -5,6 +5,7 @@ import { fmtPrice, fmtPct, fmtCompact } from "@/lib/opencex/format";
 import { ASSET_METADATA } from "@/lib/opencex/seed";
 import { Star, TrendingUp, TrendingDown } from "lucide-react";
 import { useState } from "react";
+import { CoinIcon } from "@/components/opencex/coin-icon";
 
 export function MarketsView({ onOpenTrading }: { onOpenTrading: (pair: string) => void }) {
   const pairs = useOpenCEX((s) => s.pairs);
@@ -53,7 +54,7 @@ export function MarketsView({ onOpenTrading }: { onOpenTrading: (pair: string) =
             key={t}
             onClick={() => setTab(t)}
             className={`px-3 py-2 text-xs font-medium border-b-2 transition-colors shrink-0 ${
-              tab === t ? "border-cta text-foreground" : "border-transparent text-secondary hover:text-foreground"
+              tab === t ? "border-primary text-foreground" : "border-transparent text-secondary hover:text-foreground"
             }`}
           >
             {t === "all" ? "All Markets" : t === "fav" ? "★ Favorites" : t === "gainers" ? "Gainers" : "Losers"}
@@ -93,26 +94,21 @@ export function MarketsView({ onOpenTrading }: { onOpenTrading: (pair: string) =
                   <Star className={`w-3.5 h-3.5 ${isFav ? "fill-gold text-gold" : "text-secondary"}`} />
                 </span>
                 <span className="col-span-3 flex items-center gap-2">
-                  <span
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-                    style={{ background: ASSET_METADATA[pair.base]?.color ?? "#666" }}
-                  >
-                    {pair.base.slice(0, 1)}
-                  </span>
+                  <CoinIcon asset={pair.base} size={20} />
                   <span className="flex flex-col items-start leading-tight">
                     <span className="font-medium text-sm text-foreground">{pair.base}<span className="text-secondary">/{pair.quote}</span></span>
                     <span className="text-[10px] text-secondary">{ASSET_METADATA[pair.base]?.name}</span>
                   </span>
                 </span>
                 <span className="col-span-2 text-right font-medium">{fmtPrice(t.lastPrice, pair.priceDecimals)}</span>
-                <span className={`col-span-2 text-right flex items-center justify-end gap-1 ${up ? "text-success" : "text-danger"}`}>
+                <span className={`col-span-2 text-right flex items-center justify-end gap-1 ${up ? "text-primary" : "text-danger"}`}>
                   {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                   {fmtPct(t.priceChangePct)}
                 </span>
                 <span className="col-span-2 text-right text-secondary">{fmtPrice(t.high, pair.priceDecimals)}</span>
                 <span className="col-span-1 text-right text-secondary">{fmtCompact(t.volume)}</span>
                 <span className="col-span-1 text-right">
-                  <span className="text-[10px] px-2 py-0.5 rounded bg-success/10 text-success">Trade</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded bg-primary/10 text-primary">Trade</span>
                 </span>
               </button>
             );
@@ -143,12 +139,7 @@ export function MarketsView({ onOpenTrading }: { onOpenTrading: (pair: string) =
                   >
                     <Star className={`w-3.5 h-3.5 ${isFav ? "fill-gold text-gold" : "text-secondary"}`} />
                   </span>
-                  <span
-                    className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                    style={{ background: ASSET_METADATA[pair.base]?.color ?? "#666" }}
-                  >
-                    {pair.base.slice(0, 1)}
-                  </span>
+                  <CoinIcon asset={pair.base} size={28} />
                   <div className="flex flex-col leading-tight">
                     <span className="font-semibold text-sm">{pair.base}<span className="text-secondary font-normal">/{pair.quote}</span></span>
                     <span className="text-[10px] text-secondary">{ASSET_METADATA[pair.base]?.name}</span>
@@ -156,7 +147,7 @@ export function MarketsView({ onOpenTrading }: { onOpenTrading: (pair: string) =
                 </div>
                 <div className="text-right">
                   <div className="text-sm font-semibold tabular">{fmtPrice(t.lastPrice, pair.priceDecimals)}</div>
-                  <div className={`text-xs tabular flex items-center justify-end gap-0.5 ${up ? "text-success" : "text-danger"}`}>
+                  <div className={`text-xs tabular flex items-center justify-end gap-0.5 ${up ? "text-primary" : "text-danger"}`}>
                     {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                     {fmtPct(t.priceChangePct)}
                   </div>
@@ -176,7 +167,7 @@ export function MarketsView({ onOpenTrading }: { onOpenTrading: (pair: string) =
 }
 
 function SummaryCard({ label, value, sub, tone }: { label: string; value: string; sub: string; tone?: "up" | "down" }) {
-  const color = tone === "up" ? "text-success" : tone === "down" ? "text-danger" : "text-foreground";
+  const color = tone === "up" ? "text-primary" : tone === "down" ? "text-danger" : "text-foreground";
   return (
     <div className="bg-card border border-border rounded-md p-3 md:p-4">
       <div className="text-[10px] uppercase text-secondary tracking-wider">{label}</div>

@@ -10,6 +10,7 @@ import { ArrowDownToLine, ArrowUpFromLine, Shield, Plus, Copy, Check } from "luc
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Deposit, Withdrawal } from "@/lib/opencex/types";
+import { CoinIcon } from "@/components/opencex/coin-icon";
 
 export function WalletView() {
   const balances = useOpenCEX((s) => s.balances);
@@ -28,7 +29,7 @@ export function WalletView() {
         <Card className="p-3 md:p-4">
           <div className="text-[10px] uppercase text-secondary tracking-wider">Total Balance</div>
           <div className="text-lg md:text-2xl font-bold tabular mt-1">{fmtUSD(totalUSD)}</div>
-          <div className="text-[11px] text-success mt-0.5">+2.4% 24h</div>
+          <div className="text-[11px] text-primary mt-0.5">+2.4% 24h</div>
         </Card>
         <Card className="p-3 md:p-4">
           <div className="text-[10px] uppercase text-secondary tracking-wider">Locked</div>
@@ -72,12 +73,7 @@ export function WalletView() {
                 return (
                   <div key={b.asset} className="grid grid-cols-12 gap-2 px-4 py-2.5 text-xs items-center border-b border-border/40 tabular hover:bg-elevated/40">
                     <span className="col-span-3 flex items-center gap-2">
-                      <span
-                        className="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                        style={{ background: meta?.color ?? "#666" }}
-                      >
-                        {b.asset.slice(0, 2)}
-                      </span>
+                      <CoinIcon asset={b.asset} size={28} />
                       <span className="flex flex-col leading-tight">
                         <span className="font-medium text-sm">{b.asset}</span>
                         <span className="text-[10px] text-secondary">{meta?.name}</span>
@@ -91,7 +87,7 @@ export function WalletView() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-7 px-2 text-[11px] text-success hover:text-success-hover"
+                        className="h-7 px-2 text-[11px] text-primary hover:text-primary-hover"
                         onClick={() => toast.info(`Deposit ${b.asset}`, { description: `Generate ${meta?.chains[0] ?? "chain"} address` })}
                       >
                         <ArrowDownToLine className="w-3 h-3" />
@@ -119,12 +115,7 @@ export function WalletView() {
                 <Card key={b.asset} className="p-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                        style={{ background: meta?.color ?? "#666" }}
-                      >
-                        {b.asset.slice(0, 2)}
-                      </span>
+                      <CoinIcon asset={b.asset} size={32} />
                       <div className="flex flex-col leading-tight">
                         <span className="font-medium text-sm">{b.asset}</span>
                         <span className="text-[10px] text-secondary">{meta?.name}</span>
@@ -149,7 +140,7 @@ export function WalletView() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="h-8 text-[11px] text-success border-cta/30 hover:bg-success/10"
+                      className="h-8 text-[11px] text-primary border-primary/30 hover:bg-primary/10"
                       onClick={() => toast.info(`Deposit ${b.asset}`, { description: `Generate ${meta?.chains[0] ?? "chain"} address` })}
                     >
                       <ArrowDownToLine className="w-3 h-3 mr-1" /> Deposit
@@ -213,7 +204,7 @@ export function WalletView() {
       {/* Chains info */}
       <Card className="p-4">
         <div className="flex items-center gap-2 mb-3">
-          <Shield className="w-4 h-4 text-success" />
+          <Shield className="w-4 h-4 text-primary" />
           <span className="text-sm font-semibold">Supported Chains & Confirmation Requirements</span>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
@@ -246,7 +237,7 @@ function WhitelistPanel({ whitelist }: { whitelist: ReturnType<typeof useOpenCEX
     <Card className="overflow-hidden">
       <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2">
-          <Shield className="w-4 h-4 text-success" />
+          <Shield className="w-4 h-4 text-primary" />
           <span className="text-sm font-semibold">Whitelisted Withdrawal Addresses</span>
         </div>
         <Button size="sm" variant="outline" onClick={() => setAdding(!adding)}>
@@ -373,10 +364,10 @@ function StatusBadge({ status }: { status: string }) {
   const colorMap: Record<string, string> = {
     PENDING: "bg-yellow-500/15 text-gold",
     CONFIRMED: "bg-blue-500/15 text-blue-400",
-    CREDITED: "bg-success/15 text-success",
+    CREDITED: "bg-primary/15 text-primary",
     APPROVED: "bg-blue-500/15 text-blue-400",
     PROCESSING: "bg-purple-500/15 text-purple-400",
-    COMPLETED: "bg-success/15 text-success",
+    COMPLETED: "bg-primary/15 text-primary",
     REJECTED: "bg-danger/15 text-danger",
   };
   return (

@@ -1,5 +1,5 @@
 // Mbuni CEX — Running Ostrich logo
-// Inlined SVG path so it inherits currentColor (use text-success etc. on parent).
+// Inlined SVG path so it inherits currentColor (use text-primary etc. on parent).
 // Source: Running-Ostrich-Silhouette.svg (uploaded by user)
 
 interface LogoProps {

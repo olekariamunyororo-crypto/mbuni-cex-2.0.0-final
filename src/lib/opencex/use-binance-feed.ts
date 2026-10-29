@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { useOpenCEX } from "@/lib/opencex/store";
-import { BinanceFeed, type BinanceDepth, type BinanceKline, type BinanceTicker, type BinanceTrade } from "@/lib/opencex/binance-feed";
+import { BinanceFeed, fetchKlineHistory, type BinanceDepth, type BinanceKline, type BinanceTicker, type BinanceTrade } from "@/lib/opencex/binance-feed";
 
 // Binance can emit dozens of trade/depth/ticker/kline messages per second.
 // Applying each one straight to the store means one Zustand update (and one
@@ -30,6 +30,14 @@ export function useBinanceFeed() {
   const updateTrade = useOpenCEX((s) => s.updateTradeFromBinance);
   const updateTicker = useOpenCEX((s) => s.updateTickerFromBinance);
   const updateKline = useOpenCEX((s) => s.updateKlineFromBinance);
+  const setKlineHistory = useOpenCEX((s) => s.setKlineHistory);
+
+  const loadHistory = (pair: string, signal: AbortSignal) => {
+    fetchKlineHistory(pair, 2, signal)
+      .then((h) => { if (!signal.aborted && h.length) setKlineHistory(pair, h); })
+      .catch((e) => { if (!signal.aborted) console.warn("[feed] kline history unavailable, chart will build from live candles:", e); });
+  };
+  const historyAbortRef = useRef<AbortController | null>(null);
 
   const feedRef = useRef<BinanceFeed | null>(null);
   // The pair the live socket is currently subscribed to (set on mount).
@@ -78,12 +86,15 @@ export function useBinanceFeed() {
     });
 
     feed.connect();
+    historyAbortRef.current = new AbortController();
+    loadHistory(initialPair, historyAbortRef.current.signal);
     feedRef.current = feed;
     connectedPairRef.current = initialPair;
     setFeed(feed);
 
     return () => {
       if (timer !== null) clearTimeout(timer);
+      historyAbortRef.current?.abort();
       feed.close();
       feedRef.current = null;
       connectedPairRef.current = null;
@@ -101,5 +112,8 @@ export function useBinanceFeed() {
     if (!feed || connectedPairRef.current === activePair) return;
     connectedPairRef.current = activePair;
     feed.switchPair(activePair);
+    historyAbortRef.current?.abort();
+    historyAbortRef.current = new AbortController();
+    loadHistory(activePair, historyAbortRef.current.signal);
   }, [activePair]);
 }

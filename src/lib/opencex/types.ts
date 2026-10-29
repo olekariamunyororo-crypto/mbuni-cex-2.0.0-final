@@ -1,6 +1,14 @@
 // Mbuni CEX — Core domain types
 // Mirrors the data model in §8 of the spec (PostgreSQL entities + NATS events)
 
+export type ViewKey =
+  | "markets"
+  | "trading"
+  | "swap"
+  | "wallet"
+  | "admin"
+  | "architecture";
+
 export type Side = "BUY" | "SELL";
 
 export type OrderType = "LIMIT" | "MARKET" | "IOC" | "FOK" | "POST_ONLY";

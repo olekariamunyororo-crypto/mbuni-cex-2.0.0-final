@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { Cpu } from "lucide-react";
 import { OstrichLogo } from "@/components/opencex/ostrich-logo";
 
 export function SplashScreen({ onDone }: { onDone: () => void }) {
@@ -9,70 +10,119 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
 
   useEffect(() => {
     const start = Date.now();
-    const duration = 1800;
+    const duration = 2000;
     const interval = setInterval(() => {
       const elapsed = Date.now() - start;
       const p = Math.min(100, (elapsed / duration) * 100);
       setProgress(p);
-      if (p >= 100) { clearInterval(interval); setTimeout(onDone, 200); }
+      if (p >= 100) {
+        clearInterval(interval);
+        setTimeout(onDone, 300);
+      }
     }, 16);
     return () => clearInterval(interval);
   }, [onDone]);
 
   return (
     <motion.div
-      className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
-      style={{ background: "#000" }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.4 }}
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center overflow-hidden"
+      style={{ background: "var(--color-bg)" }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
     >
-      {/* Floating coin icons (Kraken-style 3D feel via CSS) */}
+      {/* Gradient mesh — animated orbs */}
       <motion.div
-        className="absolute w-12 h-12 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-        style={{ background: "#f7931a", top: "15%", left: "15%", boxShadow: "0 8px 32px rgba(247,147,26,0.3)" }}
-        animate={{ y: [0, -12, 0], rotate: [0, 5, 0] }}
-        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-      >₿</motion.div>
+        className="absolute w-[500px] h-[500px] rounded-full blur-[120px]"
+        style={{ background: "radial-gradient(circle, rgba(127, 102, 255, 0.15), transparent 70%)" }}
+        initial={{ scale: 0.5, opacity: 0, x: "-20%" }}
+        animate={{ scale: 1.2, opacity: 1, x: "0%" }}
+        transition={{ duration: 2, ease: "easeOut" }}
+      />
       <motion.div
-        className="absolute w-10 h-10 rounded-full flex items-center justify-center text-[9px] font-bold text-white"
-        style={{ background: "#627eea", top: "20%", right: "20%", boxShadow: "0 8px 32px rgba(98,126,234,0.3)" }}
-        animate={{ y: [0, 10, 0], rotate: [0, -5, 0] }}
-        transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-      >Ξ</motion.div>
-      <motion.div
-        className="absolute w-8 h-8 rounded-full flex items-center justify-center text-[8px] font-bold text-white"
-        style={{ background: "#9945ff", bottom: "25%", left: "25%", boxShadow: "0 8px 24px rgba(153,69,255,0.3)" }}
-        animate={{ y: [0, -8, 0], rotate: [0, 8, 0] }}
-        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-      ><span className="text-[8px] font-bold text-white">◎</span></motion.div>
+        className="absolute w-[400px] h-[400px] rounded-full blur-[100px]"
+        style={{ background: "radial-gradient(circle, rgba(163, 230, 53, 0.1), transparent 70%)" }}
+        initial={{ scale: 0.3, opacity: 0, x: "30%", y: "20%" }}
+        animate={{ scale: 1, opacity: 1, x: "10%", y: "0%" }}
+        transition={{ duration: 2.5, ease: "easeOut" }}
+      />
 
-      {/* Logo */}
+      {/* Glass logo container */}
       <motion.div
-        initial={{ scale: 0.7, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        initial={{ scale: 0.6, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
         className="relative z-10 flex flex-col items-center"
       >
-        <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-success" style={{ background: "#1c1c1e" }}>
-          <OstrichLogo className="w-16 h-16" />
+        <div className="relative">
+          {/* Glow behind logo */}
+          <div
+            className="absolute inset-0 rounded-[1.75rem] blur-2xl"
+            style={{ background: "radial-gradient(circle, rgba(163, 230, 53, 0.3), transparent 70%)" }}
+          />
+          {/* Glass tile with ostrich */}
+          <motion.div
+            className="glass-strong relative w-24 h-24 rounded-[1.75rem] flex items-center justify-center text-primary"
+            animate={{
+              boxShadow: [
+                "0 0 40px rgba(163, 230, 53, 0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
+                "0 0 80px rgba(163, 230, 53, 0.3), inset 0 1px 0 rgba(255,255,255,0.12)",
+                "0 0 40px rgba(163, 230, 53, 0.15), inset 0 1px 0 rgba(255,255,255,0.08)",
+              ],
+            }}
+            transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <OstrichLogo className="w-20 h-20" />
+          </motion.div>
         </div>
 
-        <h1 className="mt-6 text-2xl font-bold tracking-tight text-white">
-          Mbuni CEX <span className="text-success">2.0</span>
-        </h1>
-        <p className="mt-1 text-xs text-secondary">Spot Cryptocurrency Exchange</p>
+        {/* Wordmark */}
+        <motion.h1
+          className="relative mt-8 text-3xl font-bold tracking-tight"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+        >
+          Mbuni CEX
+          <span className="ml-2 text-primary text-glow-primary">2.0</span>
+        </motion.h1>
 
-        {/* Loading bar — minimal, thin */}
-        <div className="mt-8 w-48 h-0.5 rounded-full overflow-hidden" style={{ background: "#1c1c1e" }}>
+        <motion.p
+          className="relative mt-2 text-sm text-secondary font-medium"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
+        >
+          Spot Cryptocurrency Exchange · Rust · Go · React
+        </motion.p>
+
+        {/* Liquid loading bar */}
+        <div className="relative mt-10 w-56 h-1 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.04)" }}>
           <motion.div
-            className="h-full rounded-full"
-            style={{ width: `${progress}%`, background: "#a3e635" }}
+            className="absolute inset-y-0 left-0 rounded-full"
+            style={{
+              width: `${progress}%`,
+              background: "linear-gradient(90deg, #a3e635, #7f66ff)",
+              boxShadow: "0 0 12px rgba(163, 230, 53, 0.4)",
+            }}
           />
         </div>
-        <div className="mt-2 text-[10px] text-muted tabular">{Math.round(progress)}%</div>
+        <div className="relative mt-3 text-[10px] text-tertiary tabular w-56 flex justify-between">
+          <span className="flex items-center gap-1">
+            <Cpu className="w-3 h-3" /> Initializing engine
+          </span>
+          <span>{Math.round(progress)}%</span>
+        </div>
       </motion.div>
 
-      <div className="absolute bottom-6 text-[10px] text-muted">© 2026 Mbuni CEX</div>
+      {/* Footer */}
+      <motion.div
+        className="absolute bottom-6 text-[10px] text-tertiary/60"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1, duration: 0.6 }}
+      >
+        © 2026 Mbuni CEX · Tempered Glass UI
+      </motion.div>
     </motion.div>
   );
 }

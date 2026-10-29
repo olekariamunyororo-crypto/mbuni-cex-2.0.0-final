@@ -9,51 +9,37 @@
      Frosted glass · gradient mesh · neon accents · liquid depth
      ═══════════════════════════════════════════════════════════ */
 
-  /* Brand & actions — lime is BRAND (logo, active nav, success, upticks); purple CTA is the action color */
+  /* Brand & actions */
   --color-primary: #a3e635;
   --color-accent: #a3e635;
   --color-primary-hover: #bef264;
-  --color-primary-soft: rgba(163, 230, 53, 0.14);
-  --color-primary-muted: rgba(163, 230, 53, 0.08);
+  --color-primary-soft: #a3e635;
   --color-accent-soft: rgba(163, 230, 53, 0.14);
   --color-cta: #7f66ff;
   --color-cta-hover: #9580ff;
-  --color-cta-soft: rgba(127, 102, 255, 0.14);
   --color-gold: #e0a23a;
 
-  /* Surfaces — Tempered Glass */
-  --color-bg: #07080c;
-  --color-surface: rgba(20, 22, 31, 0.72);
-  --color-surface-solid: #14161f;
-  --color-elevated: rgba(26, 29, 42, 0.78);
-  --color-elevated-solid: #1a1d2a;
-  --color-elevated-pro: rgba(30, 34, 48, 0.82);
-  --color-glass-highlight: rgba(255, 255, 255, 0.06);
-  --color-glass-border: rgba(255, 255, 255, 0.09);
-  --color-overlay: rgba(7, 8, 12, 0.68);
-  --color-disabled: rgba(255, 255, 255, 0.25);
-  /* Legacy names kept so existing classes keep working */
-  --color-solid: var(--color-surface-solid);
-  --color-solid-elevated: var(--color-elevated-solid);
+  /* Surfaces — deeper blacks for glass contrast */
+  --color-bg: #050608;
+  --color-surface: rgba(20, 22, 31, 0.6);
+  --color-elevated: rgba(26, 29, 42, 0.8);
+  --color-solid: #14161f;
+  --color-solid-elevated: #1a1d2a;
 
   /* Text */
   --color-secondary: #9ca3af;
   --color-tertiary: #6b7280;
   --color-muted: #8e8e93;
 
-  /* Lines & dividers */
-  --color-line: rgba(255, 255, 255, 0.08);
-  --color-divider: rgba(255, 255, 255, 0.06);
+  /* Lines & dividers — very subtle for glass effect */
+  --color-line: rgba(255, 255, 255, 0.06);
+  --color-divider: rgba(255, 255, 255, 0.04);
   --color-line-bright: rgba(255, 255, 255, 0.12);
 
-  /* Semantic — green/lime = up/success only, red = down/error/sell only */
+  /* Semantic */
   --color-success: #a3e635;
-  --color-success-soft: rgba(163, 230, 53, 0.12);
   --color-danger: #ff5c5c;
-  --color-danger-soft: rgba(255, 92, 92, 0.12);
   --color-warning: #ff9f0a;
-  --color-warning-soft: rgba(255, 159, 10, 0.12);
-  --color-focus: #a3e635;
 
   /* Neon glows */
   --color-glow-primary: rgba(163, 230, 53, 0.35);
@@ -72,18 +58,18 @@
   /* Legacy aliases */
   --color-background: var(--color-bg);
   --color-foreground: #ffffff;
-  --color-card: var(--color-surface-solid);
+  --color-card: var(--color-solid);
   --color-card-foreground: #ffffff;
-  --color-popover: var(--color-elevated-solid);
+  --color-popover: var(--color-solid-elevated);
   --color-popover-foreground: #ffffff;
-  --color-primary-foreground: #07080c;
+  --color-primary-foreground: #050608;
   --color-secondary-foreground: #ffffff;
   --color-muted-foreground: var(--color-secondary);
   --color-accent-foreground: #ffffff;
   --color-destructive: var(--color-danger);
   --color-border: var(--color-line);
   --color-input: rgba(255, 255, 255, 0.04);
-  --color-ring: var(--color-focus);
+  --color-ring: var(--color-primary);
   --color-up: var(--color-success);
   --color-down: var(--color-danger);
 
@@ -93,10 +79,10 @@
   --color-chart-4: var(--color-cta);
   --color-chart-5: #9945ff;
 
-  --color-sidebar: rgba(7, 8, 12, 0.7);
+  --color-sidebar: rgba(5, 6, 8, 0.7);
   --color-sidebar-foreground: #ffffff;
   --color-sidebar-primary: var(--color-primary);
-  --color-sidebar-primary-foreground: #07080c;
+  --color-sidebar-primary-foreground: #050608;
   --color-sidebar-accent: rgba(255, 255, 255, 0.04);
   --color-sidebar-accent-foreground: #ffffff;
   --color-sidebar-border: var(--color-line);
@@ -148,13 +134,9 @@
   .tnum, .tabular {
     font-variant-numeric: tabular-nums;
   }
-  .tnum-tight {
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -0.01em;
-  }
 
   :focus-visible {
-    outline: 2px solid var(--color-focus);
+    outline: 2px solid var(--color-primary);
     outline-offset: 2px;
   }
   input:focus-visible { outline: none; }
@@ -177,57 +159,26 @@
    ═══════════════════════════════════════════════════════════ */
 
 @layer components {
-  /* ── Glass levels (design-system §3). Keep opacity 0.65–0.85; pair translucency with blur;
-        avoid stacking more than 2–3 heavy blur layers. ── */
+  /* Standard frosted glass — semi-transparent + blur + border + shadow */
   .glass {
-    background: var(--color-surface);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--color-glass-border);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 1px 0 var(--color-glass-highlight);
-  }
-  .glass-raised {
-    background: var(--color-elevated);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--color-glass-border);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 var(--color-glass-highlight);
-  }
-  .glass-pro {
-    background: var(--color-elevated-pro);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1px solid var(--color-glass-border);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), inset 0 1px 0 var(--color-glass-highlight);
-  }
-  .glass-soft {
-    background: color-mix(in srgb, var(--color-surface) 60%, transparent);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
-  }
-  /* Performance-critical lists: no blur */
-  .glass-solid {
-    background: var(--color-surface-solid);
-    border: 1px solid var(--color-glass-border);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-  }
-  .tab-bar-glass {
-    background: color-mix(in srgb, var(--color-bg) 80%, transparent);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border-top: 1px solid rgba(255, 255, 255, 0.05);
+    background: rgba(20, 22, 31, 0.45);
+    backdrop-filter: blur(20px) saturate(1.5);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow:
+      0 4px 24px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
   /* Stronger glass — more opaque, deeper blur */
-  /* Legacy alias → .glass-pro values */
   .glass-strong {
-    background: var(--color-elevated-pro);
-    backdrop-filter: blur(40px);
-    -webkit-backdrop-filter: blur(40px);
-    border: 1px solid var(--color-glass-border);
-    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55), inset 0 1px 0 var(--color-glass-highlight);
+    background: rgba(20, 22, 31, 0.7);
+    backdrop-filter: blur(30px) saturate(1.8);
+    -webkit-backdrop-filter: blur(30px) saturate(1.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
   }
 
   /* Light glass — barely there, for overlays */
@@ -240,14 +191,14 @@
 
   /* Glass card — the primary container */
   .glass-card {
-    background: var(--color-surface);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
-    border: 1px solid var(--color-glass-border);
-    border-radius: 1.5rem; /* rounded-3xl */
+    background: rgba(20, 22, 31, 0.5);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 1.5rem;
     box-shadow:
-      0 8px 32px rgba(0, 0, 0, 0.45),
-      inset 0 1px 0 var(--color-glass-highlight);
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
     transition: border-color 0.2s ease, box-shadow 0.2s ease;
   }
 
@@ -294,18 +245,13 @@
   }
 
   .btn-cta:active {
-    transform: scale(0.98); /* press state: 0.97–0.98 */
-  }
-  .btn-cta:disabled, .btn-buy:disabled, .btn-sell:disabled {
-    opacity: 0.4;
-    pointer-events: none;
+    transform: translateY(0);
   }
 
   /* Buy button — lime with glow */
-  /* NOTE: design-system says lime is not the primary button; .btn-buy is the semantic BUY (up) action only. */
   .btn-buy {
     background: linear-gradient(135deg, #a3e635, #84cc16);
-    color: #07080c;
+    color: #050608;
     border-radius: 0.875rem;
     font-weight: 700;
     box-shadow:
@@ -419,3 +365,79 @@
 /* Hide scrollbar */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Mbuni nav glass fix */
+.glass-strong {
+  background: rgba(12, 14, 20, 0.92) !important;
+  backdrop-filter: blur(24px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.tab-bar-glass {
+  background: rgba(10, 12, 18, 0.94) !important;
+  backdrop-filter: blur(28px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.5) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ========== AI Studio glass match ========== */
+:root {
+  --background: #0e1016;
+  --bg: #0e1016;
+  --color-bg: #0e1016;
+  --elevated: rgba(22, 24, 32, 0.72);
+  --color-elevated: rgba(22, 24, 32, 0.72);
+  --card: rgba(24, 26, 36, 0.65);
+  --color-card: rgba(24, 26, 36, 0.65);
+  --border: rgba(255, 255, 255, 0.07);
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --input: rgba(18, 20, 28, 0.8);
+}
+
+html, body, .bg-bg, .bg-background {
+  background-color: #0e1016 !important;
+  background: #0e1016 !important;
+}
+
+/* Tempered glass surfaces */
+.glass-raised,
+.glass-strong,
+.glass-edge {
+  background: rgba(22, 24, 34, 0.72) !important;
+  backdrop-filter: blur(28px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.tab-bar-glass,
+.glass-strong {
+  background: rgba(14, 16, 24, 0.88) !important;
+  backdrop-filter: blur(30px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Soften hard white rings on cards / segments */
+[class*="border-white"],
+[class*="border-border"],
+.border,
+.rounded-2xl,
+.rounded-3xl {
+  border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Elevated panels */
+.bg-elevated, .bg-card {
+  background: rgba(22, 24, 34, 0.7) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* Top bar / pills — soft glass not pure black */
+.bg-black, .bg-\[\#000\], .bg-\[\#0a0a0a\] {
+  background: rgba(16, 18, 26, 0.85) !important;
+}
