@@ -91,7 +91,7 @@ export function PairSelector() {
                         className={`w-3 h-3 ${favorites.has(p.symbol) ? "fill-gold text-gold" : "text-secondary"}`}
                         onClick={(e) => toggleFav(p.symbol, e)}
                       />
-                      <CoinIcon asset={p.base} size={18} />
+                      <CoinIcon asset={p.base} size={16} />
                       <span className="font-medium">{p.symbol}</span>
                     </span>
                     <span className="text-right">{t ? fmtPrice(t.lastPrice, p.priceDecimals) : "—"}</span>

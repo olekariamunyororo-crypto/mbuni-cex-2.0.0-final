@@ -18,10 +18,8 @@ import {
 import { useOpenCEX } from "@/lib/opencex/store";
 import { ASSET_METADATA } from "@/lib/opencex/seed";
 import { OstrichLogo } from "@/components/opencex/ostrich-logo";
-import { CoinIcon } from "@/components/opencex/coin-icon";
 import { toast } from "sonner";
-import { apiSaveOnboarding } from "next-auth/react";
-import { Button } from "@/components/ui/Button";
+import { CoinIcon } from "@/components/opencex/coin-icon";
 
 type Experience = "NOVICE" | "INTERMEDIATE" | "PRO" | "INSTITUTIONAL";
 
@@ -71,7 +69,12 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
     }
     setSaving(true);
     try {
-      const data = await apiSaveOnboarding(prefs);
+      const res = await fetch("/api/onboarding", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(prefs),
+      });
+      const data = await res.json();
       if (!data.ok) {
         toast.error(data.error ?? "Failed to save preferences");
         setSaving(false);
@@ -113,47 +116,25 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
 
       {/* Header + progress */}
       <div className="relative px-6 pt-6 max-w-3xl mx-auto w-full">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="w-9 h-9 rounded-2xl bg-primary-soft border border-primary/20 flex items-center justify-center text-primary overflow-hidden shadow-[0_2px_10px_rgba(163,230,53,0.15)]">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="w-8 h-8 rounded-md bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center text-black overflow-hidden">
             <OstrichLogo className="w-7 h-7" />
           </div>
-          <div>
-            <span className="font-bold text-sm text-white">Mbuni CEX</span>
-            <span className="text-[11px] text-tertiary ml-2">Progressive Setup</span>
-          </div>
+          <span className="font-bold text-sm">Mbuni CEX · Onboarding</span>
         </div>
         <div className="flex gap-2">
-          {STEPS.map((s, i) => {
-            const isCompleted = i < step;
-            const isCurrent = i === step;
-            return (
-              <div key={s} className="flex-1">
-                <div
-                  className={`h-1.5 rounded-full transition-all duration-200 ${
-                    isCompleted
-                      ? "bg-primary"
-                      : isCurrent
-                      ? "bg-cta shadow-[0_0_8px_rgba(127,102,255,0.4)]"
-                      : "bg-white/10"
-                  }`}
-                />
-                <div
-                  className={`text-[11px] mt-1.5 flex items-center gap-1 ${
-                    isCompleted
-                      ? "text-primary font-semibold"
-                      : isCurrent
-                      ? "text-white font-bold"
-                      : "text-muted"
-                  }`}
-                >
-                  <span className="text-[10px] font-mono">
-                    {isCompleted ? "✓" : `0${i + 1}`}
-                  </span>
-                  <span className="truncate">{s}</span>
-                </div>
+          {STEPS.map((s, i) => (
+            <div key={s} className="flex-1">
+              <div
+                className={`h-1 rounded-full transition-colors ${
+                  i <= step ? "bg-primary" : "bg-elevated-foreground/30"
+                }`}
+              />
+              <div className={`text-[10px] mt-1.5 ${i === step ? "text-foreground font-medium" : "text-secondary"}`}>
+                {s}
               </div>
-            );
-          })}
+            </div>
+          ))}
         </div>
       </div>
 
@@ -203,23 +184,19 @@ export function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
           >
             <ArrowLeft className="w-4 h-4" /> Back
           </button>
-          <Button
-            variant="primary"
-            size="md"
-            pill
+          <button
             onClick={next}
-            loading={saving}
-            className="gap-2 px-6"
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary disabled:opacity-50 text-black text-sm font-semibold transition-colors"
           >
-            <span>
-              {saving
-                ? "Saving…"
-                : step === STEPS.length - 1
-                ? "Enter Mbuni CEX"
-                : "Continue"}
-            </span>
+            {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+            {saving
+              ? "Saving…"
+              : step === STEPS.length - 1
+              ? "Enter Mbuni CEX"
+              : "Continue"}
             {!saving && <ArrowRight className="w-4 h-4" />}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

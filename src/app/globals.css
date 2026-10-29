@@ -365,3 +365,79 @@
 /* Hide scrollbar */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Mbuni nav glass fix */
+.glass-strong {
+  background: rgba(12, 14, 20, 0.92) !important;
+  backdrop-filter: blur(24px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(1.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.tab-bar-glass {
+  background: rgba(10, 12, 18, 0.94) !important;
+  backdrop-filter: blur(28px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.5) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ========== AI Studio glass match ========== */
+:root {
+  --background: #0e1016;
+  --bg: #0e1016;
+  --color-bg: #0e1016;
+  --elevated: rgba(22, 24, 32, 0.72);
+  --color-elevated: rgba(22, 24, 32, 0.72);
+  --card: rgba(24, 26, 36, 0.65);
+  --color-card: rgba(24, 26, 36, 0.65);
+  --border: rgba(255, 255, 255, 0.07);
+  --color-border: rgba(255, 255, 255, 0.07);
+  --color-glass-border: rgba(255, 255, 255, 0.08);
+  --input: rgba(18, 20, 28, 0.8);
+}
+
+html, body, .bg-bg, .bg-background {
+  background-color: #0e1016 !important;
+  background: #0e1016 !important;
+}
+
+/* Tempered glass surfaces */
+.glass-raised,
+.glass-strong,
+.glass-edge {
+  background: rgba(22, 24, 34, 0.72) !important;
+  backdrop-filter: blur(28px) saturate(1.5) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+}
+
+.tab-bar-glass,
+.glass-strong {
+  background: rgba(14, 16, 24, 0.88) !important;
+  backdrop-filter: blur(30px) saturate(1.6) !important;
+  -webkit-backdrop-filter: blur(30px) saturate(1.6) !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Soften hard white rings on cards / segments */
+[class*="border-white"],
+[class*="border-border"],
+.border,
+.rounded-2xl,
+.rounded-3xl {
+  border-color: rgba(255, 255, 255, 0.07) !important;
+}
+
+/* Elevated panels */
+.bg-elevated, .bg-card {
+  background: rgba(22, 24, 34, 0.7) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+}
+
+/* Top bar / pills — soft glass not pure black */
+.bg-black, .bg-\[\#000\], .bg-\[\#0a0a0a\] {
+  background: rgba(16, 18, 26, 0.85) !important;
+}

@@ -4,18 +4,13 @@ import { useOpenCEX } from "@/lib/opencex/store";
 import { fmtQty, fmtUSD, fmtDateTime, shortAddr, shortHash } from "@/lib/opencex/format";
 import { ASSET_METADATA, CHAINS } from "@/lib/opencex/seed";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/Button";
-import { AssetRow } from "@/components/ui/AssetRow";
-import { AIInsightCard } from "@/components/ui/AIInsightCard";
-import { StatusBadge } from "@/components/ui/StatusBadge";
-import { SectionHeader } from "@/components/ui/SectionHeader";
-import { DiscoverList, type DiscoverItem } from "@/components/ui/DiscoverList";
-import { ArrowDownToLine, ArrowUpFromLine, Shield, Plus, Copy, Check, Lock, Send, ShieldCheck, Key, ShieldAlert } from "lucide-react";
-import { CoinIcon } from "@/components/opencex/coin-icon";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { ArrowDownToLine, ArrowUpFromLine, Shield, Plus, Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import type { Deposit, Withdrawal } from "@/lib/opencex/types";
-import { cn } from "@/lib/utils";
+import { CoinIcon } from "@/components/opencex/coin-icon";
 
 export function WalletView() {
   const balances = useOpenCEX((s) => s.balances);
@@ -25,252 +20,212 @@ export function WalletView() {
   const pairs = useOpenCEX((s) => s.pairs);
 
   const totalUSD = balances.reduce((s, b) => s + b.usdValue, 0);
-  const totalLocked = balances.reduce((s, b) => s + b.locked * (b.usdValue / (b.free + b.locked || 1)), 0);
-  const availableUSD = Math.max(0, totalUSD - totalLocked);
+  const totalLocked = balances.reduce((s, b) => s + b.locked * (getUSDPrice(b.asset, pairs) ?? 0), 0);
 
   return (
-    <div className="p-4 md:p-6 max-w-5xl mx-auto space-y-5">
-      {/* Hero Portfolio Balance Card (Tempered Glass Raised) */}
-      <div className="glass-raised rounded-3xl p-6 border border-[var(--color-glass-border)] glass-edge space-y-5">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <div className="text-[12px] font-semibold text-tertiary uppercase tracking-wider">
-              Total Estimated Portfolio
-            </div>
-            <div className="text-[36px] font-bold tracking-tight text-white tnum mt-1">
-              {fmtUSD(totalUSD)}
-            </div>
-            <div className="flex items-center gap-2 mt-1 text-[13px]">
-              <span className="text-primary font-semibold tnum">+2.48% (+$348.12)</span>
-              <span className="text-tertiary">·</span>
-              <span className="text-secondary">Past 24 hours</span>
-            </div>
-          </div>
-
-          {/* Quick Action Buttons (52px / 44px primary controls with Purple CTA) */}
-          <div className="flex items-center gap-2.5 flex-wrap">
-            <Button
-              variant="primary"
-              size="md"
-              icon={<ArrowDownToLine className="w-4 h-4" />}
-              onClick={() => toast.info("Deposit initiated", { description: "Select network & copy destination address below" })}
-            >
-              Deposit
-            </Button>
-            <Button
-              variant="outline"
-              size="md"
-              icon={<ArrowUpFromLine className="w-4 h-4" />}
-              onClick={() => toast.info("Withdraw initiated", { description: "24h whitelisted timelock address check active" })}
-            >
-              Withdraw
-            </Button>
-            <Button
-              variant="outline"
-              size="md"
-              icon={<Send className="w-4 h-4" />}
-              onClick={() => toast.info("Internal Transfer", { description: "Instant 0-fee transfer to another Mbuni UID" })}
-            >
-              Transfer
-            </Button>
-          </div>
-        </div>
-
-        {/* Breakdown pill row */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t border-divider">
-          <div className="p-3 rounded-2xl bg-surface/50 border border-white/5">
-            <div className="text-[11px] text-tertiary font-semibold uppercase tracking-wider">Available</div>
-            <div className="text-[17px] font-bold text-white tnum mt-0.5">{fmtUSD(availableUSD)}</div>
-            <div className="text-[11px] text-secondary mt-0.5">Ready for order book</div>
-          </div>
-          <div className="p-3 rounded-2xl bg-surface/50 border border-white/5">
-            <div className="text-[11px] text-tertiary font-semibold uppercase tracking-wider">Locked in Orders</div>
-            <div className="text-[17px] font-bold text-gold tnum mt-0.5">{fmtUSD(totalLocked)}</div>
-            <div className="text-[11px] text-secondary mt-0.5">{balances.filter((b) => b.locked > 0).length} active limit orders</div>
-          </div>
-          <div className="col-span-2 sm:col-span-1 p-3 rounded-2xl bg-surface/50 border border-white/5">
-            <div className="text-[11px] text-tertiary font-semibold uppercase tracking-wider">Custody Level</div>
-            <div className="text-[17px] font-bold text-white mt-0.5 flex items-center gap-1.5">
-              <ShieldCheck className="w-4 h-4 text-primary" />
-              <span>Hybrid HSM</span>
-            </div>
-            <div className="text-[11px] text-secondary mt-0.5">MPC + 24h Timelock</div>
-          </div>
-        </div>
+    <div className="p-3 md:p-4 space-y-4">
+      {/* Portfolio summary */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+        <Card className="p-3 md:p-4">
+          <div className="text-[10px] uppercase text-secondary tracking-wider">Total Balance</div>
+          <div className="text-lg md:text-2xl font-bold tabular mt-1">{fmtUSD(totalUSD)}</div>
+          <div className="text-[11px] text-primary mt-0.5">+2.4% 24h</div>
+        </Card>
+        <Card className="p-3 md:p-4">
+          <div className="text-[10px] uppercase text-secondary tracking-wider">Locked</div>
+          <div className="text-lg md:text-2xl font-bold tabular mt-1">{fmtUSD(totalLocked)}</div>
+          <div className="text-[11px] text-secondary mt-0.5">{balances.filter((b) => b.locked > 0).length} assets</div>
+        </Card>
+        <Card className="p-3 md:p-4">
+          <div className="text-[10px] uppercase text-secondary tracking-wider">Available</div>
+          <div className="text-lg md:text-2xl font-bold tabular mt-1">{fmtUSD(totalUSD - totalLocked)}</div>
+          <div className="text-[11px] text-secondary mt-0.5">For trading & withdrawal</div>
+        </Card>
+        <Card className="p-3 md:p-4">
+          <div className="text-[10px] uppercase text-secondary tracking-wider">Custody Mode</div>
+          <div className="text-lg md:text-2xl font-bold mt-1">Hybrid</div>
+          <div className="text-[11px] text-secondary mt-0.5">HSM · Passkey · Whitelist</div>
+        </Card>
       </div>
 
-      {/* AI Co-pilot Insight */}
-      <AIInsightCard
-        title="Custody & Yield Insight"
-        insight="Your USDT reserves are fully unencumbered. Multi-chain Bitcoin address whitelist is locked with 24-hour cool-down protection enabled."
-        accent="lime"
-      />
-
-      {/* Tabs Section */}
-      <Tabs defaultValue="balances" className="space-y-4">
-        <TabsList className="flex w-auto p-1 rounded-2xl bg-surface/70 border border-white/5 overflow-x-auto no-scrollbar">
-          <TabsTrigger value="balances" className="px-5 py-2 text-xs font-semibold rounded-xl data-[state=active]:bg-elevated data-[state=active]:text-white">
-            Asset Balances
-          </TabsTrigger>
-          <TabsTrigger value="deposits" className="px-5 py-2 text-xs font-semibold rounded-xl data-[state=active]:bg-elevated data-[state=active]:text-white">
-            Deposit History
-          </TabsTrigger>
-          <TabsTrigger value="withdrawals" className="px-5 py-2 text-xs font-semibold rounded-xl data-[state=active]:bg-elevated data-[state=active]:text-white">
-            Withdrawal Records
-          </TabsTrigger>
-          <TabsTrigger value="whitelist" className="px-5 py-2 text-xs font-semibold rounded-xl data-[state=active]:bg-elevated data-[state=active]:text-white">
-            Address Whitelist
-          </TabsTrigger>
+      <Tabs defaultValue="balances">
+        <TabsList className="flex w-auto overflow-x-auto no-scrollbar">
+          <TabsTrigger value="balances">Balances</TabsTrigger>
+          <TabsTrigger value="deposits">Deposits</TabsTrigger>
+          <TabsTrigger value="withdrawals">Withdrawals</TabsTrigger>
+          <TabsTrigger value="whitelist">Whitelist</TabsTrigger>
         </TabsList>
 
-        {/* Tab 1: Balances */}
-        <TabsContent value="balances" className="mt-0">
-          <div className="glass-card rounded-3xl p-2 md:p-4 border border-[var(--color-glass-border)]">
-            <div className="px-3 py-2 text-[12px] font-semibold text-tertiary uppercase tracking-wider">
-              Cryptocurrency Assets
+        <TabsContent value="balances" className="mt-3">
+          {/* Desktop table */}
+          <Card className="overflow-hidden hidden md:block">
+            <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase text-secondary border-b border-border">
+              <span className="col-span-3">Asset</span>
+              <span className="col-span-3 text-right">Total</span>
+              <span className="col-span-2 text-right">Available</span>
+              <span className="col-span-2 text-right">Locked</span>
+              <span className="col-span-1 text-right">USD Value</span>
+              <span className="col-span-1 text-right">Action</span>
             </div>
-            <div className="divide-y divide-divider/40">
+            <div className="max-h-[60vh] overflow-y-auto">
               {balances.map((b) => {
                 const meta = ASSET_METADATA[b.asset];
                 return (
-                  <AssetRow
-                    key={b.asset}
-                    symbol={b.asset}
-                    name={meta?.name}
-                    balance={b.free + b.locked}
-                    usdValue={b.usdValue}
-                    onClick={() =>
-                      toast.info(`${b.asset} Wallet Details`, {
-                        description: `Available: ${fmtQty(b.free, 4)} · Locked: ${fmtQty(b.locked, 4)}`,
-                      })
-                    }
-                  />
+                  <div key={b.asset} className="grid grid-cols-12 gap-2 px-4 py-2.5 text-xs items-center border-b border-border/40 tabular hover:bg-elevated/40">
+                    <span className="col-span-3 flex items-center gap-2">
+                      <CoinIcon asset={b.asset} size={28} />
+                      <span className="flex flex-col leading-tight">
+                        <span className="font-medium text-sm">{b.asset}</span>
+                        <span className="text-[10px] text-secondary">{meta?.name}</span>
+                      </span>
+                    </span>
+                    <span className="col-span-3 text-right font-medium">{fmtQty(b.free + b.locked, 6)} {b.asset}</span>
+                    <span className="col-span-2 text-right">{fmtQty(b.free, 6)}</span>
+                    <span className="col-span-2 text-right text-gold">{fmtQty(b.locked, 6)}</span>
+                    <span className="col-span-1 text-right text-secondary">{fmtUSD(b.usdValue)}</span>
+                    <span className="col-span-1 flex justify-end gap-1">
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-[11px] text-primary hover:text-primary-hover"
+                        onClick={() => toast.info(`Deposit ${b.asset}`, { description: `Generate ${meta?.chains[0] ?? "chain"} address` })}
+                      >
+                        <ArrowDownToLine className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-7 px-2 text-[11px] text-danger hover:text-danger"
+                        onClick={() => toast.info(`Withdraw ${b.asset}`)}
+                      >
+                        <ArrowUpFromLine className="w-3 h-3" />
+                      </Button>
+                    </span>
+                  </div>
                 );
               })}
             </div>
+          </Card>
+
+          {/* Mobile card list */}
+          <div className="md:hidden space-y-2">
+            {balances.map((b) => {
+              const meta = ASSET_METADATA[b.asset];
+              return (
+                <Card key={b.asset} className="p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <CoinIcon asset={b.asset} size={32} />
+                      <div className="flex flex-col leading-tight">
+                        <span className="font-medium text-sm">{b.asset}</span>
+                        <span className="text-[10px] text-secondary">{meta?.name}</span>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold tabular">{fmtUSD(b.usdValue)}</div>
+                      <div className="text-[10px] text-secondary tabular">{fmtQty(b.free + b.locked, 6)} {b.asset}</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-3 pt-2 border-t border-border/40 text-[11px]">
+                    <div>
+                      <div className="text-[10px] text-secondary uppercase">Available</div>
+                      <div className="tabular">{fmtQty(b.free, 6)} {b.asset}</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[10px] text-secondary uppercase">Locked</div>
+                      <div className="tabular text-gold">{fmtQty(b.locked, 6)} {b.asset}</div>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mt-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-[11px] text-primary border-primary/30 hover:bg-primary/10"
+                      onClick={() => toast.info(`Deposit ${b.asset}`, { description: `Generate ${meta?.chains[0] ?? "chain"} address` })}
+                    >
+                      <ArrowDownToLine className="w-3 h-3 mr-1" /> Deposit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 text-[11px] text-danger border-danger/30 hover:bg-danger/10"
+                      onClick={() => toast.info(`Withdraw ${b.asset}`)}
+                    >
+                      <ArrowUpFromLine className="w-3 h-3 mr-1" /> Withdraw
+                    </Button>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         </TabsContent>
 
-        {/* Tab 2: Deposits */}
-        <TabsContent value="deposits" className="mt-0">
-          <div className="glass-card rounded-3xl overflow-hidden border border-[var(--color-glass-border)]">
+        <TabsContent value="deposits" className="mt-3">
+          <Card className="overflow-hidden">
             <TxTable
               rows={deposits}
               columns={[
-                { key: "timestamp", label: "Date & Time", render: (d: Deposit) => fmtDateTime(d.timestamp) },
-                {
-                  key: "asset",
-                  label: "Asset",
-                  render: (d: Deposit) => (
-                    <span className="font-semibold text-white inline-flex items-center gap-1.5">
-                      <CoinIcon asset={d.asset} size={16} />
-                      {d.asset}
-                    </span>
-                  ),
-                },
-                { key: "chain", label: "Network", render: (d: Deposit) => d.chain },
-                { key: "amount", label: "Amount", right: true, render: (d: Deposit) => <span className="tnum font-semibold text-primary">+{fmtQty(d.amount, 6)} {d.asset}</span> },
-                { key: "address", label: "Address", render: (d: Deposit) => <span className="font-mono text-[11px] text-secondary">{shortAddr(d.address)}</span> },
-                { key: "txHash", label: "Transaction Hash", render: (d: Deposit) => <span className="font-mono text-[11px] text-tertiary">{shortHash(d.txHash)}</span> },
-                { key: "confirmations", label: "Confs", right: true, render: (d: Deposit) => <span className="tnum">{d.confirmations}/{d.requiredConfirmations}</span> },
-                { key: "status", label: "Status", render: (d: Deposit) => <StatusBadge status={d.status === "CREDITED" ? "success" : "warning"} label={d.status} /> },
+                { key: "timestamp", label: "Time", render: (d: Deposit) => fmtDateTime(d.timestamp) },
+                { key: "asset", label: "Asset", render: (d: Deposit) => d.asset },
+                { key: "chain", label: "Chain", render: (d: Deposit) => d.chain },
+                { key: "amount", label: "Amount", right: true, render: (d: Deposit) => `${fmtQty(d.amount, 6)} ${d.asset}` },
+                { key: "address", label: "Address", render: (d: Deposit) => shortAddr(d.address) },
+                { key: "txHash", label: "Tx Hash", render: (d: Deposit) => shortHash(d.txHash) },
+                { key: "confirmations", label: "Conf.", right: true, render: (d: Deposit) => `${d.confirmations}/${d.requiredConfirmations}` },
+                { key: "status", label: "Status", render: (d: Deposit) => <StatusBadge status={d.status} /> },
               ]}
             />
-          </div>
+          </Card>
         </TabsContent>
 
-        {/* Tab 3: Withdrawals */}
-        <TabsContent value="withdrawals" className="mt-0">
-          <div className="glass-card rounded-3xl overflow-hidden border border-[var(--color-glass-border)]">
+        <TabsContent value="withdrawals" className="mt-3">
+          <Card className="overflow-hidden">
             <TxTable
               rows={withdrawals}
               columns={[
-                { key: "timestamp", label: "Date & Time", render: (w: Withdrawal) => fmtDateTime(w.timestamp) },
-                {
-                  key: "asset",
-                  label: "Asset",
-                  render: (w: Withdrawal) => (
-                    <span className="font-semibold text-white inline-flex items-center gap-1.5">
-                      <CoinIcon asset={w.asset} size={16} />
-                      {w.asset}
-                    </span>
-                  ),
-                },
-                { key: "chain", label: "Network", render: (w: Withdrawal) => w.chain },
-                { key: "amount", label: "Amount", right: true, render: (w: Withdrawal) => <span className="tnum font-semibold text-white">-{fmtQty(w.amount, 6)} {w.asset}</span> },
-                { key: "fee", label: "Network Fee", right: true, render: (w: Withdrawal) => <span className="tnum text-tertiary">{fmtQty(w.fee, 6)} {w.asset}</span> },
-                { key: "address", label: "Destination", render: (w: Withdrawal) => <span className="font-mono text-[11px] text-secondary">{shortAddr(w.address)}</span> },
-                { key: "txHash", label: "Tx Hash", render: (w: Withdrawal) => <span className="font-mono text-[11px] text-tertiary">{w.txHash ? shortHash(w.txHash) : "—"}</span> },
-                { key: "status", label: "Status", render: (w: Withdrawal) => <StatusBadge status={w.status === "COMPLETED" ? "success" : w.status === "REJECTED" ? "danger" : "warning"} label={w.status} /> },
+                { key: "timestamp", label: "Time", render: (w: Withdrawal) => fmtDateTime(w.timestamp) },
+                { key: "asset", label: "Asset", render: (w: Withdrawal) => w.asset },
+                { key: "chain", label: "Chain", render: (w: Withdrawal) => w.chain },
+                { key: "amount", label: "Amount", right: true, render: (w: Withdrawal) => `${fmtQty(w.amount, 6)} ${w.asset}` },
+                { key: "fee", label: "Fee", right: true, render: (w: Withdrawal) => `${fmtQty(w.fee, 6)} ${w.asset}` },
+                { key: "address", label: "Address", render: (w: Withdrawal) => shortAddr(w.address) },
+                { key: "txHash", label: "Tx Hash", render: (w: Withdrawal) => w.txHash ? shortHash(w.txHash) : "—" },
+                { key: "status", label: "Status", render: (w: Withdrawal) => <StatusBadge status={w.status} /> },
               ]}
             />
-          </div>
+          </Card>
         </TabsContent>
 
-        {/* Tab 4: Whitelist */}
-        <TabsContent value="whitelist" className="mt-0">
+        <TabsContent value="whitelist" className="mt-3">
           <WhitelistPanel whitelist={whitelist} />
         </TabsContent>
       </Tabs>
 
-      {/* Multi-Chain Support Grid */}
-      <div className="glass-card rounded-3xl p-5 border border-[var(--color-glass-border)] space-y-3">
-        <div className="flex items-center gap-2">
+      {/* Chains info */}
+      <Card className="p-4">
+        <div className="flex items-center gap-2 mb-3">
           <Shield className="w-4 h-4 text-primary" />
-          <h3 className="text-sm font-bold text-white">Supported Multi-Chain Custody Networks</h3>
+          <span className="text-sm font-semibold">Supported Chains & Confirmation Requirements</span>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
           {CHAINS.map((c) => (
-            <div key={c.id} className="p-3 rounded-2xl bg-surface/60 border border-white/5 space-y-1">
-              <div className="text-xs font-semibold text-white">{c.name}</div>
-              <div className="text-[11px] text-tertiary tnum">
+            <div key={c.id} className="bg-elevated/40 rounded p-2">
+              <div className="text-xs font-medium">{c.name}</div>
+              <div className="text-[10px] text-secondary mt-0.5">
                 {c.confirmations} confs · {fmtUSD(c.withdrawalFeeUSD)} fee
               </div>
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Section 6.10 Discover / Feature List */}
-      <div>
-        <SectionHeader
-          title="Security & Institutional Custody"
-          subtitle="Enterprise protection, HSM key sharding, and real-time transaction screening"
-        />
-        <DiscoverList
-          items={[
-            {
-              id: "whitelist",
-              title: "Address Whitelist & Timelock",
-              description: "24-hour mandatory cool-down protection on all newly registered withdrawal addresses.",
-              icon: ShieldCheck,
-              iconColor: "#a3e635",
-              badge: "Enforced",
-              onClick: () => toast.success("Whitelist Enforced", { description: "All external withdrawals require 24h timelock" }),
-            },
-            {
-              id: "mpc",
-              title: "Threshold MPC Cold Vault",
-              description: "3-of-5 distributed multi-party computation keys for institutional cold storage.",
-              icon: Key,
-              iconColor: "#7f66ff",
-              badge: "Vault Active",
-              onClick: () => toast.info("MPC Vault", { description: "HSM-backed threshold keys active" }),
-            },
-            {
-              id: "kyt",
-              title: "Real-Time KYT Screening",
-              description: "Automated illicit transaction detection and Scorechain deposit risk scoring.",
-              icon: ShieldAlert,
-              iconColor: "#28a0f0",
-              badge: "Scorechain",
-              onClick: () => toast.info("KYT Screening", { description: "Zero high-risk deposits detected" }),
-            },
-          ]}
-        />
-      </div>
+      </Card>
     </div>
   );
+}
+
+function getUSDPrice(asset: string, pairs: any[]) {
+  if (asset === "USDT") return 1;
+  const p = pairs.find((x) => x.symbol === `${asset}/USDT`);
+  return p ? null : null; // simplified — uses balance.usdValue elsewhere
 }
 
 function WhitelistPanel({ whitelist }: { whitelist: ReturnType<typeof useOpenCEX.getState>["whitelist"] }) {
@@ -279,57 +234,48 @@ function WhitelistPanel({ whitelist }: { whitelist: ReturnType<typeof useOpenCEX
   const [form, setForm] = useState({ asset: "BTC", chain: "Bitcoin", address: "", label: "" });
 
   return (
-    <div className="glass-card rounded-3xl overflow-hidden border border-[var(--color-glass-border)]">
-      <div className="flex items-center justify-between px-5 py-4 border-b border-divider">
+    <Card className="overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
         <div className="flex items-center gap-2">
           <Shield className="w-4 h-4 text-primary" />
-          <span className="text-sm font-bold text-white">Whitelisted Withdrawal Addresses</span>
+          <span className="text-sm font-semibold">Whitelisted Withdrawal Addresses</span>
         </div>
         <Button size="sm" variant="outline" onClick={() => setAdding(!adding)}>
-          <Plus className="w-3.5 h-3.5 mr-1" /> Add Address
+          <Plus className="w-3 h-3 mr-1" /> Add Address
         </Button>
       </div>
 
       {adding && (
-        <div className="p-4 bg-surface/90 border-b border-divider grid grid-cols-1 md:grid-cols-5 gap-3">
+        <div className="p-3 bg-elevated/40 border-b border-border grid grid-cols-1 md:grid-cols-5 gap-2">
           <select
             value={form.asset}
             onChange={(e) => setForm({ ...form, asset: e.target.value })}
-            className="h-11 bg-elevated border border-white/10 rounded-xl px-3 text-xs text-white"
+            className="bg-input border border-border rounded px-2 py-1.5 text-xs"
           >
-            {Object.keys(ASSET_METADATA).map((a) => (
-              <option key={a} value={a} className="bg-bg text-white">
-                {a}
-              </option>
-            ))}
+            {Object.keys(ASSET_METADATA).map((a) => <option key={a} value={a}>{a}</option>)}
           </select>
           <select
             value={form.chain}
             onChange={(e) => setForm({ ...form, chain: e.target.value })}
-            className="h-11 bg-elevated border border-white/10 rounded-xl px-3 text-xs text-white"
+            className="bg-input border border-border rounded px-2 py-1.5 text-xs"
           >
-            {CHAINS.map((c) => (
-              <option key={c.id} value={c.name} className="bg-bg text-white">
-                {c.name}
-              </option>
-            ))}
+            {CHAINS.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
           </select>
           <input
             placeholder="0x... or bc1q..."
             value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
-            className="h-11 bg-elevated border border-white/10 rounded-xl px-3 text-xs md:col-span-2 text-white outline-none focus:border-primary"
+            className="bg-input border border-border rounded px-2 py-1.5 text-xs md:col-span-2"
           />
-          <div className="flex gap-2">
+          <div className="flex gap-1">
             <input
               placeholder="Label"
               value={form.label}
               onChange={(e) => setForm({ ...form, label: e.target.value })}
-              className="flex-1 h-11 bg-elevated border border-white/10 rounded-xl px-3 text-xs text-white outline-none focus:border-primary"
+              className="flex-1 bg-input border border-border rounded px-2 py-1.5 text-xs"
             />
             <Button
               size="sm"
-              variant="primary"
               onClick={() => {
                 if (!form.address || !form.label) {
                   toast.error("Address and label required");
@@ -349,35 +295,29 @@ function WhitelistPanel({ whitelist }: { whitelist: ReturnType<typeof useOpenCEX
 
       <div className="overflow-x-auto no-scrollbar">
         <div style={{ minWidth: "640px" }}>
-          <div className="grid grid-cols-12 gap-2 px-5 py-3 text-[11px] uppercase tracking-wider text-secondary border-b border-divider font-semibold">
+          <div className="grid grid-cols-12 gap-2 px-4 py-2 text-[10px] uppercase text-secondary border-b border-border">
             <span className="col-span-2">Asset</span>
             <span className="col-span-2">Chain</span>
             <span className="col-span-4">Address</span>
             <span className="col-span-2">Label</span>
-            <span className="col-span-1">Lock</span>
+            <span className="col-span-1">Time-lock</span>
             <span className="col-span-1">Added</span>
           </div>
-          <div className="divide-y divide-divider/40">
+          <div>
             {whitelist.map((w) => (
-              <div
-                key={w.id}
-                className="grid grid-cols-12 gap-2 px-5 py-3.5 text-xs items-center hover:bg-white/[0.03] transition-colors"
-              >
-                <span className="col-span-2 font-semibold text-white inline-flex items-center gap-1.5">
-                  <CoinIcon asset={w.asset} size={16} />
-                  {w.asset}
-                </span>
+              <div key={w.id} className="grid grid-cols-12 gap-2 px-4 py-2 text-xs items-center border-b border-border/40 tabular hover:bg-elevated/40">
+                <span className="col-span-2 font-medium">{w.asset}</span>
                 <span className="col-span-2 text-secondary">{w.chain}</span>
-                <span className="col-span-4 font-mono text-[11px] text-tertiary">{shortAddr(w.address, 10, 8)}</span>
+                <span className="col-span-4 font-mono text-[11px]">{shortAddr(w.address, 10, 8)}</span>
                 <span className="col-span-2 text-secondary">{w.label}</span>
-                <span className="col-span-1 text-gold font-semibold">{w.timeLockHours}h</span>
-                <span className="col-span-1 text-tertiary text-[11px]">{new Date(w.addedAt).toLocaleDateString()}</span>
+                <span className="col-span-1 text-gold">{w.timeLockHours}h</span>
+                <span className="col-span-1 text-secondary text-[10px]">{new Date(w.addedAt).toLocaleDateString()}</span>
               </div>
             ))}
           </div>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -389,41 +329,50 @@ interface Column<T> {
 }
 
 function TxTable<T extends { id: string; timestamp: number }>({ rows, columns }: { rows: T[]; columns: Column<T>[] }) {
+  // Min width so the table can horizontally scroll on mobile
   const minRowWidth = Math.max(columns.length * 110, 600);
   return (
-    <div className="overflow-x-auto no-scrollbar">
-      <div style={{ minWidth: `${minRowWidth}px` }}>
-        <div
-          className="grid gap-2 px-5 py-3 text-[11px] uppercase tracking-wider text-secondary border-b border-divider font-semibold"
-          style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
-        >
-          {columns.map((c) => (
-            <span key={c.key} className={c.right ? "text-right" : ""}>
-              {c.label}
-            </span>
-          ))}
-        </div>
-        <div className="divide-y divide-divider/40">
-          {rows.length === 0 && (
-            <div className="px-5 py-10 text-center text-xs text-secondary">
-              No transactions recorded yet
-            </div>
-          )}
-          {rows.map((row) => (
-            <div
-              key={row.id}
-              className="grid gap-2 px-5 py-3.5 text-xs items-center hover:bg-white/[0.03] transition-colors"
-              style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
-            >
-              {columns.map((c) => (
-                <span key={c.key} className={c.right ? "text-right" : ""}>
-                  {c.render(row)}
-                </span>
-              ))}
-            </div>
-          ))}
+    <div>
+      <div className="overflow-x-auto no-scrollbar">
+        <div style={{ minWidth: `${minRowWidth}px` }}>
+          <div className="grid gap-2 px-4 py-2 text-[10px] uppercase text-secondary border-b border-border" style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}>
+            {columns.map((c) => (
+              <span key={c.key} className={c.right ? "text-right" : ""}>{c.label}</span>
+            ))}
+          </div>
+          <div className="max-h-[60vh] overflow-y-auto">
+            {rows.length === 0 && <div className="px-4 py-8 text-center text-xs text-secondary">No records</div>}
+            {rows.map((row) => (
+              <div
+                key={row.id}
+                className="grid gap-2 px-4 py-2 text-xs items-center border-b border-border/40 tabular hover:bg-elevated/40"
+                style={{ gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }}
+              >
+                {columns.map((c) => (
+                  <span key={c.key} className={c.right ? "text-right" : ""}>{c.render(row)}</span>
+                ))}
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const colorMap: Record<string, string> = {
+    PENDING: "bg-yellow-500/15 text-gold",
+    CONFIRMED: "bg-blue-500/15 text-blue-400",
+    CREDITED: "bg-primary/15 text-primary",
+    APPROVED: "bg-blue-500/15 text-blue-400",
+    PROCESSING: "bg-purple-500/15 text-purple-400",
+    COMPLETED: "bg-primary/15 text-primary",
+    REJECTED: "bg-danger/15 text-danger",
+  };
+  return (
+    <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${colorMap[status] ?? "bg-elevated text-secondary"}`}>
+      {status}
+    </span>
   );
 }

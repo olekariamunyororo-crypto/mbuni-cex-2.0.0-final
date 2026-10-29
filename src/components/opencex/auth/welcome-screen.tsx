@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Cpu, ShieldCheck, CandlestickChart, ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/Button";
 import { ASSET_METADATA } from "@/lib/opencex/seed";
 import { CoinIcon } from "@/components/opencex/coin-icon";
 
@@ -139,16 +138,13 @@ export function WelcomeScreen({ onComplete }: { onComplete: () => void }) {
                 <ChevronLeft className="w-5 h-5" />
               </button>
             )}
-            <Button
-              variant="primary"
-              size="md"
-              pill
+            <button
               onClick={next}
-              className="gap-2 px-6"
+              className="flex items-center gap-2 px-4 py-2 rounded-md bg-primary hover:bg-primary text-black text-sm font-semibold transition-colors"
             >
-              <span>{isLast ? "Get started" : "Continue"}</span>
+              {isLast ? "Get started" : "Continue"}
               <ArrowRight className="w-4 h-4" />
-            </Button>
+            </button>
           </div>
         </div>
       </div>
@@ -226,19 +222,20 @@ function CoinsVisual() {
           return (
             <motion.div
               key={c}
-              className="aspect-square rounded-xl border border-border bg-card flex flex-col items-center justify-center gap-1.5"
+              className="aspect-square rounded-xl border border-border bg-card flex flex-col items-center justify-center gap-1"
               initial={{ opacity: 0, y: 20, scale: 0.8 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: i * 0.07, type: "spring", stiffness: 200 }}
               whileHover={{ scale: 1.08, y: -4 }}
             >
               <motion.div
+                className="w-9 h-9 rounded-full"
                 animate={{ y: [0, -3, 0] }}
                 transition={{ duration: 2 + i * 0.2, repeat: Infinity, ease: "easeInOut" }}
               >
                 <CoinIcon asset={c} size={36} />
               </motion.div>
-              <span className="text-[10px] font-semibold text-white">{c}</span>
+              <span className="text-[10px] font-medium">{c}</span>
             </motion.div>
           );
         })}

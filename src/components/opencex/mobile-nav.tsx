@@ -81,7 +81,7 @@ export function MobileNav({
     <>
       {/* Floating tempered glass tab bar per Section 6.8 */}
       <nav
-        className="md:hidden fixed bottom-0 inset-x-0 z-40 px-3 pb-3 pointer-events-none"
+        className="md:hidden fixed bottom-0 inset-x-0 z-50 px-3 pb-3 pointer-events-none"
         style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}
       >
         <div className="glass-strong rounded-2xl px-2 py-2 flex items-center justify-between glass-edge max-w-md mx-auto pointer-events-auto">
@@ -140,7 +140,7 @@ export function MobileNav({
 
       {/* More drawer */}
       <Drawer open={moreOpen} onOpenChange={setMoreOpen}>
-        <DrawerContent className="glass-strong text-white border-t border-white/10" style={{ background: "rgba(20, 22, 31, 0.95)" }}>
+        <DrawerContent className="glass-strong text-white border-t border-white/6" style={{ background: "rgba(20, 22, 31, 0.95)" }}>
           <DrawerHeader className="text-left px-5 pt-4 pb-2">
             <DrawerTitle className="flex items-center justify-between text-base font-bold text-white">
               <span>Account & Systems</span>

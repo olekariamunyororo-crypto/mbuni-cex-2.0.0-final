@@ -268,7 +268,7 @@ export function TradingView() {
             <div className="h-[36vh] min-h-[220px] max-h-[320px] glass-raised rounded-2xl overflow-hidden border border-[var(--color-glass-border)] shrink-0">
               <PriceChart pair={activePair} />
             </div>
-            <div className="flex-1 glass-raised rounded-2xl overflow-hidden border border-[var(--color-glass-border)] min-h-0 flex flex-col pb-20 md:pb-0">
+            <div className="flex-1 glass-raised rounded-2xl overflow-hidden border border-[var(--color-glass-border)] min-h-0 flex flex-col pb-28 md:pb-0">
               <Tabs
                 value={mobileTab}
                 onValueChange={(v) => setMobileTab(v as MobileTab)}
