@@ -188,6 +188,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    const t = queueMicrotask(() => refresh());
     refresh();
     const handleAuthChange = () => refresh();
     window.addEventListener("mbuni_auth_change", handleAuthChange);
