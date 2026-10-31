@@ -83,4 +83,4 @@ infra/k8s/sealed-secret.yaml
 /storybook-static/
 
 # Playwright visual regression baselines ARE committed (so diffs are caught in PRs)
-# — but the .cache dir above is not.
+# — but the .cache dir above is not.*.orig
