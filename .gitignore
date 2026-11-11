@@ -84,3 +84,10 @@ infra/k8s/sealed-secret.yaml
 
 # Playwright visual regression baselines ARE committed (so diffs are caught in PRs)
 # — but the .cache dir above is not.
+
+# Graphify local AST graph (regenerate: graphify update . --no-cluster)
+/graphify-out/
+.graphify/
+
+# Local patch backups
+*.orig
